@@ -4,6 +4,7 @@ export type VoiceProfile = {
   accent: string;
   gender: string;
   language: string;
+  nativeVoiceId?: string;
 };
 
 export type SpeechSettings = {
@@ -22,11 +23,6 @@ export type SpeechResult = {
   voice: VoiceProfile;
 };
 
-/**
- * Device TTS is the first provider adapter. Keeping it behind this interface
- * means the UI does not need to know whether speech comes from the phone or
- * from Ovrino's future server-side provider.
- */
 export interface TtsProvider {
   speak(request: SpeechRequest): Promise<SpeechResult>;
   stop(): Promise<void>;
