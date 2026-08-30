@@ -3,24 +3,14 @@ import { useFonts } from '@expo-google-fonts/vazirmatn';
 import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
 import { VOICES, type VoiceOption } from './data/voices';
+import { VOICE_PRESETS, type VoicePreset } from './data/voice-presets';
 import { VoicePicker } from './components/VoicePicker';
 import { AudioPlayerCard } from './components/AudioPlayerCard';
+import { VoiceControls } from './components/VoiceControls';
 
 const ttsProvider = new DeviceTtsProvider();
 type GenerationState = 'idle' | 'speaking' | 'error';
@@ -32,6 +22,8 @@ export default function App() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [rate, setRate] = useState(1);
+  const [pitch, setPitch] = useState(1);
 
   const selectedVoice = useMemo(() => VOICES.find((voice) => voice.id === selectedVoiceId) ?? VOICES[0], [selectedVoiceId]);
   useEffect(() => () => { void ttsProvider.stop(); }, []);
@@ -40,31 +32,23 @@ export default function App() {
   const canGenerate = Boolean(text.trim());
   const isSpeaking = generationState === 'speaking';
   const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: 'en-US' });
-
-  const stopSpeech = async () => {
-    await ttsProvider.stop();
-    setGenerationState('idle');
-  };
+  const stopSpeech = async () => { await ttsProvider.stop(); setGenerationState('idle'); };
 
   const previewVoice = async (voice: VoiceOption) => {
-    await stopSpeech();
-    setGenerationState('speaking');
-    try {
-      await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate: 1, pitch: 1 } });
-      setGenerationState('idle');
-    } catch { setGenerationState('error'); }
+    await stopSpeech(); setGenerationState('speaking');
+    try { await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); setGenerationState('idle'); }
+    catch { setGenerationState('error'); }
   };
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
     if (isSpeaking) { await stopSpeech(); return; }
-    setGenerationState('speaking');
-    setHasGenerated(true);
-    try {
-      await ttsProvider.speak({ text: text.trim(), voice: toTtsVoice(selectedVoice), settings: { rate: 1, pitch: 1 } });
-      setGenerationState('idle');
-    } catch { setGenerationState('error'); }
+    setGenerationState('speaking'); setHasGenerated(true);
+    try { await ttsProvider.speak({ text: text.trim(), voice: toTtsVoice(selectedVoice), settings: { rate, pitch } }); setGenerationState('idle'); }
+    catch { setGenerationState('error'); }
   };
+
+  const applyPreset = (preset: VoicePreset) => { setRate(preset.rate); setPitch(preset.pitch); setGenerationState('idle'); };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -74,9 +58,7 @@ export default function App() {
           <View style={styles.header}><Text style={styles.logo}>OVRINO</Text><View style={[styles.statusDot, isSpeaking && styles.statusDotActive]} /></View>
           <View style={styles.hero}><Text style={styles.title}>Give your words a voice.</Text><Text style={styles.subtitle}>Paste anything. Choose a voice. Listen.</Text></View>
 
-          {hasGenerated && canGenerate && (
-            <AudioPlayerCard text={text} voiceName={selectedVoice.name} playing={isSpeaking} onPlayPause={handleGenerate} onStop={stopSpeech} />
-          )}
+          {hasGenerated && canGenerate && <AudioPlayerCard text={text} voiceName={selectedVoice.name} playing={isSpeaking} onPlayPause={handleGenerate} onStop={stopSpeech} />}
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}><Text style={styles.label}>TEXT</Text><Text style={styles.characterCount}>{text.length}/2,000</Text></View>
@@ -92,10 +74,11 @@ export default function App() {
             </Pressable>
           </View>
 
+          <VoiceControls rate={rate} pitch={pitch} presets={VOICE_PRESETS} onRateChange={setRate} onPitchChange={setPitch} onPreset={applyPreset} />
+
           <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canGenerate, busy: isSpeaking }} accessibilityLabel={isSpeaking ? 'Stop speaking' : 'Generate voice'} disabled={!canGenerate} onPress={handleGenerate} style={({ pressed }) => [styles.generateButton, !canGenerate && styles.generateButtonDisabled, pressed && canGenerate && styles.generateButtonPressed]}>
             {isSpeaking ? <><View style={styles.stopIcon} /><Text style={styles.generateText}>Stop Speaking</Text></> : <><Text style={styles.generateIcon}>{generationState === 'error' ? '!' : '▶'}</Text><Text style={styles.generateText}>{generationState === 'error' ? 'Try Again' : 'Generate Voice'}</Text></>}
           </Pressable>
-
           {isSpeaking && <View style={styles.statusMessage}><ActivityIndicator size="small" /><Text style={styles.statusText}>Speaking with {selectedVoice.name}</Text></View>}
           {generationState === 'error' && <Text accessibilityRole="alert" style={styles.errorMessage}>Ovrino couldn't start speech. Check the selected device voice and try again.</Text>}
           <Text style={styles.footer}>Your words, your voice.</Text>
