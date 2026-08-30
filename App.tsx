@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from '@expo-google-fonts/vazirmatn';
 import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
@@ -77,13 +77,11 @@ export default function App() {
         <Text style={styles.footer}>Your words, your voice.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
-    <ModalShim visible={pickerVisible} onClose={() => setPickerVisible(false)}>
-      <VoicePicker voices={VOICES} selectedVoiceId={selectedVoiceId} onPreview={previewVoice} onSelect={(voice) => { setSelectedVoiceId(voice.id); setGenerationState('idle'); setPickerVisible(false); }} />
-    </ModalShim>
+    <ModalShim visible={pickerVisible} onClose={() => setPickerVisible(false)}><VoicePicker voices={VOICES} selectedVoiceId={selectedVoiceId} onPreview={previewVoice} onSelect={(voice) => { setSelectedVoiceId(voice.id); setGenerationState('idle'); setPickerVisible(false); }} /></ModalShim>
   </SafeAreaView>;
 }
 
-function ModalShim({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: React.ReactNode }) {
+function ModalShim({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: ReactNode }) {
   return <View style={visible ? styles.modalOverlay : styles.hidden}><SafeAreaView style={styles.modalSafeArea}><View style={styles.modalHeader}><Text style={styles.modalTitle}>Choose a voice</Text><Pressable accessibilityLabel="Close voice picker" onPress={onClose} style={styles.closeButton}><Text style={styles.closeText}>×</Text></Pressable></View>{children}</SafeAreaView></View>;
 }
 
