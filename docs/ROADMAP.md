@@ -53,10 +53,8 @@
 - [ ] Audio export once generated audio is available
 - [ ] Cloud sync only if it becomes necessary
 
-## Phase 7 — Creator features
-- [x] Creator/narration mode
+## Phase 7 — Future creator work
 - [ ] Easy audio export for video editors
-- [x] Creator-oriented presets
 - [ ] Advanced narration controls
 
 ## Phase 8 — Production backend
