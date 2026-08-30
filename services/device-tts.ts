@@ -7,22 +7,20 @@ export class DeviceTtsProvider implements TtsProvider {
 
     const voices = await Speech.getAvailableVoicesAsync();
     const matchingVoice = voices.find((candidate) =>
-      candidate.identifier.toLowerCase().includes(request.voice.language.toLowerCase()),
+      candidate.language.toLowerCase().startsWith(request.voice.language.toLowerCase()),
     );
 
-    Speech.speak(request.text, {
-      voice: matchingVoice?.identifier,
-      rate: request.settings.rate,
-      pitch: request.settings.pitch,
-      onError: (error) => {
-        throw error;
-      },
+    return new Promise((resolve, reject) => {
+      Speech.speak(request.text, {
+        voice: matchingVoice?.identifier,
+        language: matchingVoice ? undefined : request.voice.language,
+        rate: request.settings.rate,
+        pitch: request.settings.pitch,
+        onDone: () => resolve({ mode: 'device', voice: request.voice }),
+        onStopped: () => resolve({ mode: 'device', voice: request.voice }),
+        onError: reject,
+      });
     });
-
-    return {
-      mode: 'device',
-      voice: request.voice,
-    };
   }
 
   async stop(): Promise<void> {
