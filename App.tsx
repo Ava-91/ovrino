@@ -54,10 +54,7 @@ export default function App() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <View>
-              <Text style={styles.logo}>OVRINO</Text>
-              <Text style={styles.persianLogo}>اُورینو</Text>
-            </View>
+            <Text style={styles.logo}>OVRINO</Text>
             <View style={styles.statusDot} />
           </View>
 
@@ -113,7 +110,7 @@ export default function App() {
             <Text style={styles.generateText}>Generate Voice</Text>
           </Pressable>
 
-          <Text style={styles.footer}>اُورینو · Your words, your voice.</Text>
+          <Text style={styles.footer}>Your words, your voice.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -145,12 +142,6 @@ const styles = StyleSheet.create({
     fontFamily: 'YoungSerif_400Regular',
     fontSize: 22,
     letterSpacing: 2,
-  },
-  persianLogo: {
-    color: '#A9B3FF',
-    fontFamily: 'Vazirmatn_500Medium',
-    fontSize: 13,
-    marginTop: 2,
   },
   statusDot: {
     backgroundColor: '#8B9CFF',
