@@ -8,62 +8,63 @@
 - [ ] Replace deprecated SafeAreaView usage
 
 ## Phase 1 — Voice selection
-- [ ] Build a dedicated voice picker
-- [ ] Group voices by accent
-- [ ] Support gender and age/character metadata where available
-- [ ] Add search/filtering
-- [ ] Add voice preview samples
+- [x] Build a dedicated voice picker
+- [x] Group voices by accent
+- [x] Support honest/unknown native voice metadata
+- [x] Add search/filtering
+- [x] Add voice preview samples
+- [x] Resolve real native voice identifiers when available
+- [x] Handle unavailable native voices safely
+- [x] Stabilize category/tab layout
 
 ## Phase 2 — Real TTS MVP
-- [ ] Select a TTS provider
+- [ ] Select a production TTS provider
 - [ ] Create a secure backend endpoint
 - [ ] Send text + voice configuration to the backend
 - [ ] Return generated audio
 - [ ] Add loading, timeout, and error states
-- [ ] Never expose provider secrets in the mobile app
+- [x] Never expose provider secrets in the mobile app
 
 ## Phase 3 — Audio player
-- [ ] Play/pause
-- [ ] Seek
-- [ ] Replay
-- [ ] Playback progress
-- [ ] Generation state
-- [ ] Audio caching where appropriate
+- [x] Play/pause
+- [x] Seek UI
+- [x] Replay/stop
+- [x] Playback progress UI
+- [x] Generation state
+- [ ] Real generated-audio playback
+- [ ] Audio caching for provider audio
 
 ## Phase 4 — Voice controls
-- [ ] Speed
-- [ ] Pitch where supported
+- [x] Speed
+- [x] Pitch where supported
 - [ ] Expressiveness/style where supported
 - [ ] Pronunciation controls
 - [ ] SSML exploration
-- [ ] Presets for learning, narration, casual use, and storytelling
+- [x] Presets for learning, narration, casual use, and storytelling
 
 ## Phase 5 — Learning mode
-- [ ] Slower playback
-- [ ] Sentence-by-sentence playback
-- [ ] Repeat sentence
-- [ ] Accent-focused practice
-- [ ] Pronunciation practice research
+- [ ] Dedicated learning workflow
 
 ## Phase 6 — History and saved audio
-- [ ] Local history
-- [ ] Favorites
-- [ ] Rename/delete generated items
-- [ ] Export/share audio
+- [x] Local history
+- [x] Favorites
+- [x] Delete history
+- [x] Share workflow
+- [ ] Audio export once generated audio is available
 - [ ] Cloud sync only if it becomes necessary
 
 ## Phase 7 — Creator features
+- [x] Creator/narration mode
 - [ ] Easy audio export for video editors
-- [ ] Creator-oriented presets
-- [ ] Better narration controls
-- [ ] Sharing workflow
+- [x] Creator-oriented presets
+- [ ] Advanced narration controls
 
 ## Phase 8 — Production backend
 - [ ] Authentication if required
-- [ ] Usage limits
-- [ ] Rate limiting
-- [ ] Abuse prevention
-- [ ] Provider abstraction/fallbacks
+- [x] Usage limits
+- [x] Rate limiting foundation
+- [x] Abuse/cost protection foundation
+- [x] Provider abstraction/fallback boundary
 - [ ] Monitoring and cost controls
 
 ## Phase 9 — Release
