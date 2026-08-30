@@ -1,4 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from '@expo-google-fonts/vazirmatn';
+import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
+import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -19,8 +22,18 @@ const voices = [
 ];
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Vazirmatn_400Regular,
+    Vazirmatn_500Medium,
+    Vazirmatn_700Bold,
+    YoungSerif_400Regular,
+  });
   const [text, setText] = useState('');
   const [voiceIndex, setVoiceIndex] = useState(0);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const voice = voices[voiceIndex];
 
@@ -100,7 +113,7 @@ export default function App() {
             <Text style={styles.generateText}>Generate Voice</Text>
           </Pressable>
 
-          <Text style={styles.footer}>Ovrino · Your words, your voice.</Text>
+          <Text style={styles.footer}>اُورینو · Your words, your voice.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -129,13 +142,14 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: '#F4F6FA',
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 3.5,
+    fontFamily: 'YoungSerif_400Regular',
+    fontSize: 22,
+    letterSpacing: 2,
   },
   persianLogo: {
-    color: '#7E8798',
-    fontSize: 12,
+    color: '#A9B3FF',
+    fontFamily: 'Vazirmatn_500Medium',
+    fontSize: 13,
     marginTop: 2,
   },
   statusDot: {
@@ -149,15 +163,15 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#F4F6FA',
+    fontFamily: 'YoungSerif_400Regular',
     fontSize: 32,
-    fontWeight: '700',
-    letterSpacing: -0.8,
-    lineHeight: 38,
-    maxWidth: 320,
+    lineHeight: 40,
+    maxWidth: 330,
   },
   subtitle: {
     color: '#858D9D',
-    fontSize: 15,
+    fontFamily: 'Vazirmatn_400Regular',
+    fontSize: 14,
     lineHeight: 22,
     marginTop: 10,
   },
@@ -172,12 +186,13 @@ const styles = StyleSheet.create({
   },
   label: {
     color: '#858D9D',
+    fontFamily: 'Vazirmatn_700Bold',
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 1.6,
   },
   characterCount: {
     color: '#555D6B',
+    fontFamily: 'Vazirmatn_400Regular',
     fontSize: 11,
   },
   textInput: {
@@ -186,8 +201,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     color: '#F4F6FA',
+    fontFamily: 'Vazirmatn_400Regular',
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 27,
     minHeight: 170,
     padding: 17,
   },
@@ -219,11 +235,12 @@ const styles = StyleSheet.create({
   },
   voiceName: {
     color: '#F4F6FA',
+    fontFamily: 'Vazirmatn_500Medium',
     fontSize: 16,
-    fontWeight: '600',
   },
   voiceMeta: {
     color: '#727B8C',
+    fontFamily: 'Vazirmatn_400Regular',
     fontSize: 12,
     marginTop: 4,
   },
@@ -255,11 +272,12 @@ const styles = StyleSheet.create({
   },
   generateText: {
     color: '#0B0D12',
+    fontFamily: 'Vazirmatn_700Bold',
     fontSize: 15,
-    fontWeight: '800',
   },
   footer: {
     color: '#454C59',
+    fontFamily: 'Vazirmatn_400Regular',
     fontSize: 11,
     marginTop: 'auto',
     paddingTop: 30,
