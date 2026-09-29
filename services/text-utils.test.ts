@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunkSpeechText, detectTextLanguage, normalizeSpeechText, splitIntoSentences, wordCount } from './text-utils';
+import { chunkSpeechText, detectTextLanguage, estimatedSpeechSeconds, normalizeSpeechText, splitIntoSentences, wordCount } from './text-utils';
 
 describe('text-utils', () => {
   it('normalizes whitespace without changing paragraph boundaries', () => {
@@ -53,4 +53,10 @@ describe('detectTextLanguage', () => {
 describe('Persian sentence punctuation', () => {
   it('splits on Persian question marks', () => expect(splitIntoSentences('حالت چطوره؟ خوبم.')).toEqual(['حالت چطوره؟', 'خوبم.']));
   it('splits on Arabic semicolons', () => expect(splitIntoSentences('اول؛ دوم.')).toEqual(['اول؛', 'دوم.']));
+});
+
+
+describe('estimatedSpeechSeconds', () => {
+  it('estimates from normalized word count and rate', () => expect(estimatedSpeechSeconds('one two three', 1)).toBe(1));
+  it('gets shorter as speech rate increases', () => expect(estimatedSpeechSeconds('one '.repeat(150), 2)).toBe(30));
 });
