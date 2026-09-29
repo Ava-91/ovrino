@@ -18,6 +18,14 @@ describe('text-utils', () => {
     expect(splitIntoSentences('   ')).toEqual([]);
   });
 
+  it('cleans Unicode whitespace and spaces before punctuation', () => {
+    expect(normalizeSpeechText('Hello\\u00A0 world  !\\n\\n\\n Next  line')).toBe('Hello world!\\n\\nNext line');
+  });
+
+  it('preserves paragraph boundaries while cleaning line whitespace', () => {
+    expect(normalizeSpeechText('First\\n\\n\\nSecond')).toBe('First\\n\\nSecond');
+  });
+
   it('counts normalized words', () => {
     expect(wordCount('  one   two\nthree ')).toBe(3);
   });
