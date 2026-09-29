@@ -24,7 +24,7 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
       const matchesAccent = accent === 'All' || voice.accent === accent;
       const matchesAvailability = availability === 'All' || !voice.requiresNetwork;
       const matchesFavorite = !favoritesOnly || favoriteVoiceIds.includes(voice.id);
-      const haystack = `${voice.name} ${voice.accent} ${voice.gender} ${voice.age}`.toLowerCase();
+      const haystack = `${voice.name} ${voice.accent} ${voice.nativeLanguage} ${voice.quality ?? ''}`.toLowerCase();
       return matchesAccent && matchesAvailability && matchesFavorite && (!normalizedQuery || haystack.includes(normalizedQuery));
     });
   }, [accent, availability, favoritesOnly, favoriteVoiceIds, query, voices]);
@@ -57,7 +57,7 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
           const selected = item.id === selectedVoiceId;
           const favorite = favoriteVoiceIds.includes(item.id);
           const available = item.available !== false;
-          const metadata = [item.accent, item.requiresNetwork ? 'Network voice' : 'Offline voice', item.gender !== 'Unknown' ? item.gender : 'Voice details unavailable', item.age !== 'Unknown' ? item.age : null].filter(Boolean).join(' · ');
+          const metadata = [item.nativeLanguage, item.quality ?? 'Quality unavailable', item.requiresNetwork ? 'Network voice' : 'Offline voice'].join(' · ');
           return (
             <View style={[styles.card, selected && styles.cardSelected, !available && styles.cardUnavailable]}>
               <Pressable
