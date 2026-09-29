@@ -4,8 +4,8 @@ export function normalizeSpeechText(text: string): string {
     .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
     .replace(/[ \t]+/g, ' ')
     .replace(/[ \t]+([,.;:!?؟،؛])/g, '$1')
-    .replace(/[ \t]*\n[ \t]*/g, '\n')
-    .replace(/\n{2,}/g, '\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/(?<!\n)[ \t]*\n[ \t]*(?!\n)/g, ' ')
     .trim();
 }
 
