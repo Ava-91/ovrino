@@ -62,3 +62,9 @@ export function detectTextLanguage(text: string): DetectedTextLanguage {
   if (latin > 0) return 'en';
   return 'unknown';
 }
+
+
+export function estimatedSpeechSeconds(text: string, rate = 1): number {
+  const words = wordCount(text);
+  return Math.round((words / 150) * 60 / Math.max(0.25, rate));
+}
