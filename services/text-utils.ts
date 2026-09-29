@@ -1,5 +1,12 @@
 export function normalizeSpeechText(text: string): string {
-  return text.replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/ *\n+ */g, '\n').trim();
+  return text
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/[ \t]+([,.;:!?؟،؛])/g, '$1')
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{2,}/g, '\n\n')
+    .trim();
 }
 
 export function splitIntoSentences(text: string): string[] {
