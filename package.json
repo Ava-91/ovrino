@@ -12,7 +12,8 @@
     "lucide-react-native": "^1.37.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-svg": "~15.12.1"
+    "react-native-svg": "~15.12.1",
+    "expo-clipboard": "~8.0.8"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
