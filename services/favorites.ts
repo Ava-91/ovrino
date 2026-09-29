@@ -4,6 +4,13 @@ export type FavoriteState = { voices: string[]; history: string[] };
 const directory = `${FileSystem.documentDirectory}ovrino/`;
 const file = `${directory}favorites.json`;
 const EMPTY: FavoriteState = { voices: [], history: [] };
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+  const next = writeQueue.then(operation, operation);
+  writeQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
 
 async function ensureStorage() {
   const info = await FileSystem.getInfoAsync(directory);
@@ -22,12 +29,14 @@ export async function readFavorites(): Promise<FavoriteState> {
   } catch { return EMPTY; }
 }
 
-export async function setFavorite(kind: keyof FavoriteState, id: string, favorite: boolean) {
-  const current = await readFavorites();
-  const values = new Set(current[kind]);
-  favorite ? values.add(id) : values.delete(id);
-  const next = { ...current, [kind]: [...values] };
-  await ensureStorage();
-  await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
-  return next;
+export function setFavorite(kind: keyof FavoriteState, id: string, favorite: boolean) {
+  return enqueueWrite(async () => {
+    const current = await readFavorites();
+    const values = new Set(current[kind]);
+    favorite ? values.add(id) : values.delete(id);
+    const next = { ...current, [kind]: [...values] };
+    await ensureStorage();
+    await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
+    return next;
+  });
 }

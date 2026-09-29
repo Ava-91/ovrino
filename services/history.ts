@@ -13,6 +13,13 @@ export type SpeechHistoryItem = {
 const directory = `${FileSystem.documentDirectory}ovrino/`;
 const file = `${directory}history.json`;
 const MAX_HISTORY_ITEMS = 50;
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+  const next = writeQueue.then(operation, operation);
+  writeQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
 
 async function ensureStorage() {
   const info = await FileSystem.getInfoAsync(directory);
@@ -31,23 +38,29 @@ export async function readHistory(): Promise<SpeechHistoryItem[]> {
   }
 }
 
-export async function saveHistoryItem(item: SpeechHistoryItem) {
-  const current = await readHistory();
-  const next = [item, ...current.filter((entry) => entry.id !== item.id)].slice(0, MAX_HISTORY_ITEMS);
-  await ensureStorage();
-  await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
-  return next;
+export function saveHistoryItem(item: SpeechHistoryItem) {
+  return enqueueWrite(async () => {
+    const current = await readHistory();
+    const next = [item, ...current.filter((entry) => entry.id !== item.id)].slice(0, MAX_HISTORY_ITEMS);
+    await ensureStorage();
+    await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
+    return next;
+  });
 }
 
-export async function deleteHistoryItem(id: string) {
-  const current = await readHistory();
-  const next = current.filter((entry) => entry.id !== id);
-  await ensureStorage();
-  await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
-  return next;
+export function deleteHistoryItem(id: string) {
+  return enqueueWrite(async () => {
+    const current = await readHistory();
+    const next = current.filter((entry) => entry.id !== id);
+    await ensureStorage();
+    await FileSystem.writeAsStringAsync(file, JSON.stringify(next));
+    return next;
+  });
 }
 
-export async function clearHistory() {
-  await ensureStorage();
-  await FileSystem.writeAsStringAsync(file, '[]');
+export function clearHistory() {
+  return enqueueWrite(async () => {
+    await ensureStorage();
+    await FileSystem.writeAsStringAsync(file, '[]');
+  });
 }
