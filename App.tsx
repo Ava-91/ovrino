@@ -28,7 +28,10 @@ type GenerationState = 'idle' | 'speaking' | 'error';
 export default function App() {
   const [fontsLoaded] = useFonts({ Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold, YoungSerif_400Regular });
   const [text, setText] = useState('');
-  const [voices, setVoices] = useState<VoiceOption[]>([]);  const [selectedVoiceId, setSelectedVoiceId] = useState('');
+  const [voices, setVoices] = useState<VoiceOption[]>([]);
+  const [voicesLoading, setVoicesLoading] = useState(true);
+  const [voiceLoadError, setVoiceLoadError] = useState(false);
+  const [selectedVoiceId, setSelectedVoiceId] = useState('');
   const [pickerVisible, setPickerVisible] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
   const [hasGenerated, setHasGenerated] = useState(false);
