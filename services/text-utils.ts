@@ -14,7 +14,7 @@ export function splitIntoSentences(text: string): string[] {
   if (!normalized) return [];
 
   return normalized
-    .split(/(?<=[.!?。！？])\s+|\n+/u)
+    .split(/(?<=[.!?؟؛。！？])\s+|\n{2,}/u)
     .map((sentence) => sentence.trim())
     .filter(Boolean);
 }
