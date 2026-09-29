@@ -1,5 +1,6 @@
 import { BookOpen, ChevronLeft, ChevronRight, Square } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
 
 type Props = {
   sentences: string[];
@@ -18,11 +19,13 @@ type Props = {
 
 export function ReadingMode({ sentences, currentIndex, active, onStart, onStop, onPrevious, onNext, onSelectSentence, paragraphIndex, paragraphCount, onPreviousParagraph, onNextParagraph }: Props) {
   if (!sentences.length) return null;
+  const listRef = useRef<FlatList<string>>(null);
+  useEffect(() => { if (currentIndex >= 0 && currentIndex < sentences.length) listRef.current?.scrollToIndex({ index: currentIndex, animated: true, viewPosition: 0.35 }); }, [currentIndex, sentences.length]);
   const current = sentences[currentIndex] ?? sentences[0];
 
   return <View style={styles.card}>
     <View style={styles.header}><View style={styles.titleRow}><BookOpen size={15} color="#A9B3FF" /><Text style={styles.title}>READING MODE</Text></View><Text style={styles.count}>Sentence {currentIndex + 1}/{sentences.length}</Text></View>
-<ScrollView style={styles.sentenceList} nestedScrollEnabled>{sentences.map((sentence, index) => <Pressable key={`${index}-${sentence}`} accessibilityRole="button" accessibilityState={{ selected: index === currentIndex }} onPress={() => onSelectSentence(index)} style={[styles.sentence, index === currentIndex && styles.sentenceSelected]}><Text style={[styles.sentenceText, index === currentIndex && styles.sentenceTextSelected]}>{sentence}</Text></Pressable>)}</ScrollView>
+<FlatList ref={listRef} data={sentences} keyExtractor={(sentence, index) => `${index}-${sentence}`} style={styles.sentenceList} nestedScrollEnabled onScrollToIndexFailed={({ index }) => setTimeout(() => listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.35 }), 50)} renderItem={({ item: sentence, index }) => <Pressable accessibilityRole="button" accessibilityState={{ selected: index === currentIndex }} onPress={() => onSelectSentence(index)} style={[styles.sentence, index === currentIndex && styles.sentenceSelected]}><Text style={[styles.sentenceText, index === currentIndex && styles.sentenceTextSelected]}>{sentence}</Text></Pressable>} />
     <View style={styles.paragraphRow}><Pressable accessibilityLabel="Previous paragraph" disabled={paragraphIndex === 0} onPress={onPreviousParagraph} style={styles.paragraphButton}><ChevronLeft size={15} color="#A9B3FF" /></Pressable><Text style={styles.paragraphLabel}>Paragraph {paragraphIndex + 1}/{paragraphCount}</Text><Pressable accessibilityLabel="Next paragraph" disabled={paragraphIndex >= paragraphCount - 1} onPress={onNextParagraph} style={styles.paragraphButton}><ChevronRight size={15} color="#A9B3FF" /></Pressable></View>
     <Text style={styles.currentLabel}>Selected sentence {currentIndex + 1}</Text>
     <Text style={styles.current}>{current}</Text>
