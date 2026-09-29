@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
+import * as Clipboard from 'expo-clipboard';
 import { useFonts } from '@expo-google-fonts/vazirmatn';
 import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { AlertCircle, ChevronRight, Play, Square, X } from 'lucide-react-native';
+import { ClipboardPaste, AlertCircle, ChevronRight, Play, Square, X } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
 import type { VoiceOption } from './services/native-voices';import { buildVoiceOptions, getNativeVoices } from './services/native-voices';
@@ -118,6 +119,18 @@ export default function App() {
   const previewVoice = async (voice: VoiceOption) => { await stopSpeech(); setGenerationState('speaking'); try { await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); setGenerationState('idle'); } catch { setGenerationState('error'); } };
   const reserveUsage = (spokenText: string) => { const textDecision = validateSpeechText(spokenText); if (!textDecision.allowed) { setLimitMessage(textDecision.reason === 'text-too-long' ? 'That text is too long for one speech request.' : 'Enter some text before generating speech.'); return false; } setLimitMessage(''); return true; };
   const speakAndRemember = async (spokenText: string) => { if (!selectedVoice) throw new Error('no-device-voice'); if (!reserveUsage(spokenText)) throw new Error('usage-limit'); await ttsProvider.speak({ text: spokenText, voice: toTtsVoice(selectedVoice), settings: { rate, pitch } }); const item: SpeechHistoryItem = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: spokenText, voiceId: selectedVoice.id, voiceName: selectedVoice.name, createdAt: new Date().toISOString(), rate, pitch }; setHistory(await saveHistoryItem(item)); };
+  const pasteFromClipboard = async () => {
+    try {
+      const value = await Clipboard.getStringAsync();
+      if (!value) return;
+      setText(value.slice(0, 5000));
+      setLimitMessage('');
+      setGenerationState('idle');
+    } catch {
+      setLimitMessage('Could not read the clipboard.');
+    }
+  };
+
   const handleGenerate = async () => { if (!canGenerate) return; if (isSpeaking) { await stopSpeech(); return; } setGenerationState('speaking'); setHasGenerated(true); try { await speakAndRemember(text.trim()); setGenerationState('idle'); } catch (error) { setGenerationState('error'); if (error instanceof Error && (error.message === 'usage-limit' || error.message === 'no-device-voice')) setGenerationState('idle'); } };
   const applyPreset = (preset: VoicePreset) => { setRate(preset.rate); setPitch(preset.pitch); setGenerationState('idle'); };
   const restoreHistory = (item: SpeechHistoryItem) => { setText(item.text); setSelectedVoiceId(item.voiceId); setRate(item.rate); setPitch(item.pitch); setGenerationState('idle'); };
@@ -129,7 +142,7 @@ export default function App() {
   return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardView}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
     <View style={styles.header}><Text style={styles.logo}>OVRINO</Text><View style={[styles.statusDot, isSpeaking && styles.statusDotActive]} /></View><View style={styles.hero}><Text style={styles.title}>Give your words a voice.</Text><Text style={styles.subtitle}>Paste anything. Choose a voice. Listen.</Text></View>
     {hasGenerated && canGenerate && <AudioPlayerCard text={text} voiceName={selectedVoice.name} playing={isSpeaking} onPlay={handleGenerate} onStop={stopSpeech} />}
-    <View style={styles.section}><View style={styles.sectionHeader}><Text style={styles.label}>TEXT</Text><Text style={styles.characterCount}>{text.length}/5,000</Text></View><TextInput multiline maxLength={5000} onChangeText={(value) => { setText(value); setLimitMessage(''); if (generationState === 'error') setGenerationState('idle'); }} placeholder="Write or paste something..." placeholderTextColor="#626978" style={styles.textInput} textAlignVertical="top" value={text} /></View>
+    <View style={styles.section}><View style={styles.sectionHeader}><Text style={styles.label}>TEXT</Text><Text style={styles.characterCount}>{text.length}/5,000</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Paste from clipboard" onPress={() => void pasteFromClipboard()} style={styles.pasteButton}><ClipboardPaste size={15} color="#A9B3FF" /><Text style={styles.pasteText}>Paste from Clipboard</Text></Pressable><TextInput multiline maxLength={5000} onChangeText={(value) => { setText(value); setLimitMessage(''); if (generationState === 'error') setGenerationState('idle'); }} placeholder="Write or paste something..." placeholderTextColor="#626978" style={styles.textInput} textAlignVertical="top" value={text} /></View>
     <View style={styles.section}><View style={styles.sectionHeader}><Text style={styles.label}>VOICE</Text><Text style={styles.characterCount}>{selectedVoice.accent}</Text></View><View style={styles.voiceRow}><Pressable accessibilityRole="button" accessibilityLabel={`Selected voice: ${selectedVoice.name}. Tap to browse voices.`} onPress={() => setPickerVisible(true)} style={({ pressed }) => [styles.voiceCard, pressed && styles.voiceCardPressed]}><View style={styles.voiceIcon}><Text style={styles.voiceIconText}>{selectedVoice.name.charAt(0)}</Text></View><View style={styles.voiceInfo}><Text style={styles.voiceName}>{selectedVoice.name}</Text><Text style={styles.voiceMeta}>{selectedVoice.accent} · {selectedVoice.gender} · Tap to change</Text></View><ChevronRight size={22} color="#727B8C" strokeWidth={1.7} /></Pressable><FavoriteButton active={favorites.voices.includes(selectedVoice.id)} label={`${selectedVoice.name} voice`} onPress={() => toggleVoiceFavorite(selectedVoice.id)} /></View></View>
     <ReadingMode sentences={readingSentences} currentIndex={readingIndex} active={readingActive} onStart={() => startReading()} onStop={stopReading} onPrevious={() => moveReading(readingIndex - 1)} onNext={() => moveReading(readingIndex + 1)} />
     <VoiceControls rate={rate} pitch={pitch} presets={VOICE_PRESETS} onRateChange={setRate} onPitchChange={setPitch} onPreset={applyPreset} />
