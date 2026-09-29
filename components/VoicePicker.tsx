@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { VoiceOption } from '../data/voices';
+import type { VoiceOption } from '../services/native-voices';
 import { FavoriteButton } from './FavoriteButton';
 
 type VoicePickerProps = {
