@@ -3,7 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useFonts } from '@expo-google-fonts/vazirmatn';
 import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ClipboardPaste, AlertCircle, ChevronRight, Play, Square, X, Zap } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
@@ -21,6 +21,7 @@ import { readFavorites, setFavorite, type FavoriteState } from './services/favor
 import { readSpeechSettings, saveSpeechSettings } from './services/settings';
 import { FavoriteButton } from './components/FavoriteButton';
 import { validateSpeechText } from './services/usage-limits';
+import { useSpeechSession } from './hooks/useSpeechSession';
 
 const ttsProvider = new DeviceTtsProvider();
 type GenerationState = 'idle' | 'speaking' | 'error';
@@ -42,7 +43,7 @@ export default function App() {
   const [limitMessage, setLimitMessage] = useState('');
   const [readingIndex, setReadingIndex] = useState(0);
   const [readingActive, setReadingActive] = useState(false);
-  const readingToken = useRef(0);
+  const speechSession = useSpeechSession();
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
   const suggestedVoice = useMemo(() => { const language = detectTextLanguage(text); if (language !== 'fa' && language !== 'ar' && language !== 'en') return undefined; return voices.find((voice) => languageMatches(voice.nativeLanguage, language)); }, [text, voices]);
   const readingSentences = useMemo(() => splitIntoSentences(normalizeSpeechText(text)), [text]);
@@ -86,31 +87,30 @@ export default function App() {
   const isSpeaking = generationState === 'speaking';
   const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
   const speakReadingSentence = async (index: number, token: number) => {
-    if (!selectedVoice || token !== readingToken.current) return;
+    if (!selectedVoice || !speechSession.isCurrent(token)) return;
     try {
       await ttsProvider.speak({ text: readingSentences[index], voice: toTtsVoice(selectedVoice), settings: { rate, pitch } });
-      if (token === readingToken.current && index < readingSentences.length - 1) {
+      if (speechSession.isCurrent(token) && index < readingSentences.length - 1) {
         const next = index + 1;
         setReadingIndex(next);
         void speakReadingSentence(next, token);
-      } else if (token === readingToken.current && index >= readingSentences.length - 1) {
+      } else if (speechSession.isCurrent(token) && index >= readingSentences.length - 1) {
         setReadingActive(false);
       }
     } catch {
-      if (token === readingToken.current) setReadingActive(false);
+      if (speechSession.isCurrent(token)) setReadingActive(false);
     }
   };
   const startReading = (index = readingIndex) => {
     if (!selectedVoice || !readingSentences.length) return;
     if (index === 0 && readingIndex === 0 && !readingActive && !reserveUsage(text.trim())) return;
-    readingToken.current += 1;
-    const token = readingToken.current;
+    const token = speechSession.begin();
     setReadingIndex(index);
     setReadingActive(true);
     void ttsProvider.stop().then(() => speakReadingSentence(index, token));
   };
   const stopReading = async () => {
-    readingToken.current += 1;
+    speechSession.cancel();
     setReadingActive(false);
     await ttsProvider.stop();
   };
@@ -121,14 +121,13 @@ export default function App() {
   };
   const moveReading = (index: number) => {
     if (index < 0 || index >= readingSentences.length) return;
-    readingToken.current += 1;
-    const token = readingToken.current;
+    const token = speechSession.begin();
     setReadingIndex(index);
     setReadingActive(true);
     void ttsProvider.stop().then(() => speakReadingSentence(index, token));
   };
-  const stopSpeech = async () => { await ttsProvider.stop(); setGenerationState('idle'); };
-  const previewVoice = async (voice: VoiceOption) => { await stopSpeech(); setGenerationState('speaking'); try { await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); setGenerationState('idle'); } catch { setGenerationState('error'); } };
+  const stopSpeech = async () => { speechSession.cancel(); await ttsProvider.stop(); setGenerationState('idle'); };
+  const previewVoice = async (voice: VoiceOption) => { await stopSpeech(); const session = speechSession.begin(); setGenerationState('speaking'); try { const result = await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); if (speechSession.isCurrent(session) && !result.stopped) setGenerationState('idle'); } catch { if (speechSession.isCurrent(session)) setGenerationState('error'); } };
   const reserveUsage = (spokenText: string) => { const textDecision = validateSpeechText(spokenText); if (!textDecision.allowed) { setLimitMessage(textDecision.reason === 'text-too-long' ? 'That text is too long for one speech request.' : 'Enter some text before generating speech.'); return false; } setLimitMessage(''); return true; };
   const speakAndRemember = async (spokenText: string) => { if (!selectedVoice) throw new Error('no-device-voice'); if (!reserveUsage(spokenText)) throw new Error('usage-limit'); const result = await ttsProvider.speak({ text: spokenText, voice: toTtsVoice(selectedVoice), settings: { rate, pitch } }); if (result.stopped) return; const item: SpeechHistoryItem = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: spokenText, voiceId: selectedVoice.id, voiceName: selectedVoice.name, createdAt: new Date().toISOString(), rate, pitch }; setHistory(await saveHistoryItem(item)); };
   const pasteFromClipboard = async () => {
@@ -143,7 +142,7 @@ export default function App() {
     }
   };
 
-  const handleGenerate = async () => { if (!canGenerate) return; if (isSpeaking) { await stopSpeech(); return; } setGenerationState('speaking'); setHasGenerated(true); try { await speakAndRemember(text.trim()); setGenerationState('idle'); } catch (error) { setGenerationState('error'); if (error instanceof Error && (error.message === 'usage-limit' || error.message === 'no-device-voice')) setGenerationState('idle'); } };
+  const handleGenerate = async () => { if (!canGenerate) return; if (isSpeaking) { await stopSpeech(); return; } speechSession.begin(); setGenerationState('speaking'); setHasGenerated(true); try { await speakAndRemember(text.trim()); setGenerationState('idle'); } catch (error) { setGenerationState('error'); if (error instanceof Error && (error.message === 'usage-limit' || error.message === 'no-device-voice')) setGenerationState('idle'); } };
   const applyPreset = (preset: VoicePreset) => { setRate(preset.rate); setPitch(preset.pitch); setGenerationState('idle'); };
   const restoreHistory = (item: SpeechHistoryItem) => { setText(item.text); setSelectedVoiceId(item.voiceId); setRate(item.rate); setPitch(item.pitch); setGenerationState('idle'); };
   const removeHistory = async (id: string) => { setHistory(await deleteHistoryItem(id)); if (favorites.history.includes(id)) setFavorites(await setFavorite('history', id, false)); };
