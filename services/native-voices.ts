@@ -8,7 +8,20 @@ export type NativeVoice = {
   requiresNetwork?: boolean;
 };
 
-export type VoiceOption = {\n  id: string;\n  name: string;\n  accent: string;\n  language: string;\n  gender: 'Female' | 'Male' | 'Neutral' | 'Unknown';\n  age: 'Young' | 'Adult' | 'Mature' | 'Unknown';\n  description: string;\n  nativeVoiceId: string;\n  nativeLanguage: string;\n  available: true;\n};\n\nexport type VoiceAvailability = {
+export type VoiceOption = {
+  id: string;
+  name: string;
+  accent: string;
+  language: string;
+  gender: 'Female' | 'Male' | 'Neutral' | 'Unknown';
+  age: 'Young' | 'Adult' | 'Mature' | 'Unknown';
+  description: string;
+  nativeVoiceId: string;
+  nativeLanguage: string;
+  available: true;
+};
+
+export type VoiceAvailability = {
   voiceId: string;
   nativeVoiceId?: string;
   available: boolean;
@@ -27,7 +40,16 @@ export async function getNativeVoices(): Promise<NativeVoice[]> {
   }));
 }
 
-export function buildVoiceOptions(voices: NativeVoice[]): VoiceOption[] {\n  return voices.map((voice) => {\n    const language = normalizeLanguage(voice.language);\n    const [base, region] = language.split('-');\n    const accent = region ? `${base.toUpperCase()} (${region.toUpperCase()})` : base.toUpperCase();\n    return { id: voice.identifier, name: voice.name, accent, language: voice.language, gender: 'Unknown', age: 'Unknown', description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, requiresNetwork: Boolean(voice.requiresNetwork), quality: voice.quality, available: true };\n  });\n}\n\nexport function normalizeLanguage(language: string): string {
+export function buildVoiceOptions(voices: NativeVoice[]): VoiceOption[] {
+  return voices.map((voice) => {
+    const language = normalizeLanguage(voice.language);
+    const [base, region] = language.split('-');
+    const accent = region ? `${base.toUpperCase()} (${region.toUpperCase()})` : base.toUpperCase();
+    return { id: voice.identifier, name: voice.name, accent, language: voice.language, gender: 'Unknown', age: 'Unknown', description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, requiresNetwork: Boolean(voice.requiresNetwork), quality: voice.quality, available: true };
+  });
+}
+
+export function normalizeLanguage(language: string): string {
   return language.trim().toLowerCase().replace('_', '-');
 }
 
