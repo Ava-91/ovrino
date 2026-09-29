@@ -7,7 +7,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaV
 import { AlertCircle, ChevronRight, Play, Square, X } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
-import type { VoiceOption } from './services/native-voices';\nimport { buildVoiceOptions, getNativeVoices } from './services/native-voices';
+import type { VoiceOption } from './services/native-voices';import { buildVoiceOptions, getNativeVoices } from './services/native-voices';
 import { VOICE_PRESETS, type VoicePreset } from './data/voice-presets';
 import { VoicePicker } from './components/VoicePicker';
 import { AudioPlayerCard } from './components/AudioPlayerCard';
@@ -24,7 +24,7 @@ type GenerationState = 'idle' | 'speaking' | 'error';
 export default function App() {
   const [fontsLoaded] = useFonts({ Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold, YoungSerif_400Regular });
   const [text, setText] = useState('');
-  const [voices, setVoices] = useState<VoiceOption[]>([]);\n  const [selectedVoiceId, setSelectedVoiceId] = useState('');
+  const [voices, setVoices] = useState<VoiceOption[]>([]);  const [selectedVoiceId, setSelectedVoiceId] = useState('');
   const [pickerVisible, setPickerVisible] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -48,8 +48,8 @@ export default function App() {
   const stopSpeech = async () => { await ttsProvider.stop(); setGenerationState('idle'); };
   const previewVoice = async (voice: VoiceOption) => { await stopSpeech(); setGenerationState('speaking'); try { await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); setGenerationState('idle'); } catch { setGenerationState('error'); } };
   const reserveUsage = (spokenText: string) => { const textDecision = validateSpeechText(spokenText); if (!textDecision.allowed) { setLimitMessage(textDecision.reason === 'text-too-long' ? 'That text is too long for one speech request.' : 'Enter some text before generating speech.'); return false; } const now = Date.now(); const decision = checkUsage(now, usage); if (!decision.allowed) { setLimitMessage(`Usage limit reached. Try again in ${Math.ceil((decision.retryAfterMs ?? 0) / 60000)} minutes.`); return false; } setUsage(recordUsage(now, usage)); setLimitMessage(''); return true; };
-  const speakAndRemember = async (spokenText: string) => { if (!reserveUsage(spokenText)) throw new Error('usage-limit'); await ttsProvider.speak({ text: spokenText, voice: toTtsVoice(selectedVoice), settings: { rate, pitch } }); const item: SpeechHistoryItem = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: spokenText, voiceId: selectedVoice.id, voiceName: selectedVoice?.name ?? 'No device voice', createdAt: new Date().toISOString(), rate, pitch }; setHistory(await saveHistoryItem(item)); };
-  const handleGenerate = async () => { if (!canGenerate) return; if (isSpeaking) { await stopSpeech(); return; } setGenerationState('speaking'); setHasGenerated(true); try { await speakAndRemember(text.trim()); setGenerationState('idle'); } catch (error) { setGenerationState('error'); if (error instanceof Error && error.message === 'usage-limit') setGenerationState('idle'); } };
+  const speakAndRemember = async (spokenText: string) => { if (!selectedVoice) throw new Error('no-device-voice'); if (!reserveUsage(spokenText)) throw new Error('usage-limit'); await ttsProvider.speak({ text: spokenText, voice: toTtsVoice(selectedVoice), settings: { rate, pitch } }); const item: SpeechHistoryItem = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: spokenText, voiceId: selectedVoice.id, voiceName: selectedVoice.name, createdAt: new Date().toISOString(), rate, pitch }; setHistory(await saveHistoryItem(item)); };
+  const handleGenerate = async () => { if (!canGenerate) return; if (isSpeaking) { await stopSpeech(); return; } setGenerationState('speaking'); setHasGenerated(true); try { await speakAndRemember(text.trim()); setGenerationState('idle'); } catch (error) { setGenerationState('error'); if (error instanceof Error && (error.message === 'usage-limit' || error.message === 'no-device-voice')) setGenerationState('idle'); } };
   const applyPreset = (preset: VoicePreset) => { setRate(preset.rate); setPitch(preset.pitch); setGenerationState('idle'); };
   const restoreHistory = (item: SpeechHistoryItem) => { setText(item.text); setSelectedVoiceId(item.voiceId); setRate(item.rate); setPitch(item.pitch); setGenerationState('idle'); };
   const removeHistory = async (id: string) => { setHistory(await deleteHistoryItem(id)); if (favorites.history.includes(id)) setFavorites(await setFavorite('history', id, false)); };
