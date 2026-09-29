@@ -17,21 +17,32 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
   const [accent, setAccent] = useState('All');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [availability, setAvailability] = useState<'All' | 'Offline'>('All');
+  const [language, setLanguage] = useState('All');
   const accents = useMemo(() => ['All', ...Array.from(new Set(voices.map((voice) => voice.accent)))], [voices]);
+  const languages = useMemo(() => ['All', ...Array.from(new Set(voices.map((voice) => voice.nativeLanguage.split(/[-_]/)[0].toUpperCase())))], [voices]);
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return voices.filter((voice) => {
       const matchesAccent = accent === 'All' || voice.accent === accent;
       const matchesAvailability = availability === 'All' || !voice.requiresNetwork;
+      const matchesLanguage = language === 'All' || voice.nativeLanguage.split(/[-_]/)[0].toUpperCase() === language;
       const matchesFavorite = !favoritesOnly || favoriteVoiceIds.includes(voice.id);
       const haystack = `${voice.name} ${voice.accent} ${voice.nativeLanguage} ${voice.quality ?? ''}`.toLowerCase();
-      return matchesAccent && matchesAvailability && matchesFavorite && (!normalizedQuery || haystack.includes(normalizedQuery));
+      return matchesAccent && matchesAvailability && matchesFavorite && matchesLanguage && (!normalizedQuery || haystack.includes(normalizedQuery));
     });
-  }, [accent, availability, favoritesOnly, favoriteVoiceIds, query, voices]);
+  }, [accent, availability, favoritesOnly, favoriteVoiceIds, language, query, voices]);
 
   return (
     <View style={styles.container}>
       <TextInput accessibilityLabel="Search voices" onChangeText={setQuery} placeholder="Search voices..." placeholderTextColor="#626978" style={styles.search} value={query} />
+      <FlatList
+        data={languages}
+        horizontal
+        keyExtractor={(item) => `language-${item}`}
+        renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityState={{ selected: language === item }} onPress={() => setLanguage(item)} style={[styles.filter, language === item && styles.filterActive]}><Text style={[styles.filterText, language === item && styles.filterTextActive]}>{item}</Text></Pressable>}
+        showsHorizontalScrollIndicator={false}
+        style={styles.filters}
+      />
       <FlatList
         data={accents}
         horizontal
