@@ -15,6 +15,7 @@ import { VoiceControls } from './components/VoiceControls';
 import { HistoryPanel } from './components/HistoryPanel';
 import { clearHistory, deleteHistoryItem, readHistory, saveHistoryItem, type SpeechHistoryItem } from './services/history';
 import { readFavorites, setFavorite, type FavoriteState } from './services/favorites';
+import { readSpeechSettings, saveSpeechSettings } from './services/settings';
 import { FavoriteButton } from './components/FavoriteButton';
 import { checkUsage, recordUsage, validateSpeechText, type UsageSnapshot } from './services/usage-limits';
 
@@ -37,12 +38,18 @@ export default function App() {
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
 
   useEffect(() => {
-    void Promise.all([readHistory(), readFavorites(), getNativeVoices()]).then(([savedHistory, savedFavorites, nativeVoices]) => {
+    if (selectedVoice) void saveSpeechSettings({ voiceId: selectedVoice.id, rate, pitch });
+  }, [selectedVoice, rate, pitch]);
+
+  useEffect(() => {
+    void Promise.all([readHistory(), readFavorites(), getNativeVoices(), readSpeechSettings()]).then(([savedHistory, savedFavorites, nativeVoices, savedSettings]) => {
       const available = buildVoiceOptions(nativeVoices);
       setHistory(savedHistory);
       setFavorites(savedFavorites);
       setVoices(available);
-      if (available[0]) setSelectedVoiceId(available[0].id);
+      if (available[0]) setSelectedVoiceId(savedSettings.voiceId && available.some((voice) => voice.id === savedSettings.voiceId) ? savedSettings.voiceId : available[0].id);
+      if (typeof savedSettings.rate === 'number') setRate(savedSettings.rate);
+      if (typeof savedSettings.pitch === 'number') setPitch(savedSettings.pitch);
     });
     return () => { void ttsProvider.stop(); };
   }, []);
