@@ -57,10 +57,11 @@ export default function App() {
       if (typeof savedSettings.rate === 'number') setRate(savedSettings.rate);
       if (typeof savedSettings.pitch === 'number') setPitch(savedSettings.pitch);
     });
-    return () => { void ttsProvider.stop(); };
+    setVoicesLoading(false); return () => { void ttsProvider.stop(); };
   }, []);
 
   if (!fontsLoaded) return null;
+  if (voicesLoading) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><ActivityIndicator size="small" /><Text style={styles.loadingText}>Loading device voices…</Text></View></SafeAreaView>;
   const canGenerate = Boolean(text.trim() && selectedVoice);
   const isSpeaking = generationState === 'speaking';
   const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
