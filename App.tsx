@@ -68,7 +68,7 @@ export default function App() {
     if (!selectedVoice || token !== readingToken.current) return;
     try {
       await ttsProvider.speak({ text: readingSentences[index], voice: toTtsVoice(selectedVoice), settings: { rate, pitch } });
-      if (token === readingToken.current && readingActive && index < readingSentences.length - 1) {
+      if (token === readingToken.current && index < readingSentences.length - 1) {
         const next = index + 1;
         setReadingIndex(next);
         void speakReadingSentence(next, token);
