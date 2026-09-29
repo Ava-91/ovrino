@@ -3,6 +3,13 @@ import * as FileSystem from 'expo-file-system/legacy';
 export type SpeechSettings = { voiceId: string; rate: number; pitch: number };
 const directory = `${FileSystem.documentDirectory}ovrino/`;
 const file = `${directory}settings.json`;
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+  const next = writeQueue.then(operation, operation);
+  writeQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
 
 async function ensureStorage() {
   const info = await FileSystem.getInfoAsync(directory);
@@ -25,7 +32,9 @@ export async function readSpeechSettings(): Promise<Partial<SpeechSettings>> {
   } catch { return {}; }
 }
 
-export async function saveSpeechSettings(settings: SpeechSettings): Promise<void> {
-  await ensureStorage();
-  await FileSystem.writeAsStringAsync(file, JSON.stringify(settings));
+export function saveSpeechSettings(settings: SpeechSettings): Promise<void> {
+  return enqueueWrite(async () => {
+    await ensureStorage();
+    await FileSystem.writeAsStringAsync(file, JSON.stringify(settings));
+  });
 }
