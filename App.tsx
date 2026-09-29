@@ -8,7 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaV
 import { ClipboardPaste, AlertCircle, ChevronRight, Play, Square, X, Zap } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
-import type { VoiceOption } from './services/native-voices';import { buildVoiceOptions, getNativeVoices, languageMatches } from './services/native-voices';
+import { buildVoiceOptions, getNativeVoices, languageMatches, type VoiceOption } from './services/native-voices';
 import { VOICE_PRESETS, type VoicePreset } from './data/voice-presets';
 import { VoicePicker } from './components/VoicePicker';
 import { AudioPlayerCard } from './components/AudioPlayerCard';
