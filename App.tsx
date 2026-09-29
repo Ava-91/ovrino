@@ -8,7 +8,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaV
 import { ClipboardPaste, AlertCircle, ChevronRight, Play, Square, X, Zap } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
 import type { VoiceProfile } from './services/tts';
-import { buildVoiceOptions, getNativeVoices, languageMatches, type VoiceOption } from './services/native-voices';
+import { languageMatches, type VoiceOption } from './services/native-voices';
 import { VOICE_PRESETS, type VoicePreset } from './data/voice-presets';
 import { VoicePicker } from './components/VoicePicker';
 import { AudioPlayerCard } from './components/AudioPlayerCard';
@@ -23,6 +23,7 @@ import { FavoriteButton } from './components/FavoriteButton';
 import { validateSpeechText } from './services/usage-limits';
 import { useSpeechSession } from './hooks/useSpeechSession';
 import { useReadingText } from './hooks/useReadingText';
+import { useDeviceVoices } from './hooks/useDeviceVoices';
 
 const ttsProvider = new DeviceTtsProvider();
 type GenerationState = 'idle' | 'speaking' | 'error';
@@ -30,9 +31,7 @@ type GenerationState = 'idle' | 'speaking' | 'error';
 export default function App() {
   const [fontsLoaded] = useFonts({ Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold, YoungSerif_400Regular });
   const [text, setText] = useState('');
-  const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [voicesLoading, setVoicesLoading] = useState(true);
-  const [voiceLoadError, setVoiceLoadError] = useState(false);
+  const { voices, loading: voicesLoading, error: voiceLoadError, reload: reloadVoices } = useDeviceVoices();
   const [selectedVoiceId, setSelectedVoiceId] = useState('');
   const [pickerVisible, setPickerVisible] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
@@ -47,6 +46,7 @@ export default function App() {
   const [readingActive, setReadingActive] = useState(false);
   const speechSession = useSpeechSession();
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
+  useEffect(() => { if (voices.length && !voices.some((voice) => voice.id === selectedVoiceId)) setSelectedVoiceId(voices[0].id); }, [voices, selectedVoiceId]);
   const suggestedVoice = useMemo(() => { const language = detectTextLanguage(text); if (language !== 'fa' && language !== 'ar' && language !== 'en') return undefined; return voices.find((voice) => languageMatches(voice.nativeLanguage, language)); }, [text, voices]);
   const { sentences: readingSentences, paragraphs: readingParagraphs, paragraphStarts, getParagraphIndex } = useReadingText(text);
   const currentParagraph = getParagraphIndex(readingIndex);
@@ -56,22 +56,15 @@ export default function App() {
   }, [selectedVoice, rate, pitch]);
 
   const loadVoices = async () => {
-    setVoicesLoading(true);
-    setVoiceLoadError(false);
     try {
-      const [savedHistory, savedFavorites, nativeVoices, savedSettings] = await Promise.all([readHistory(), readFavorites(), getNativeVoices(), readSpeechSettings()]);
-      const available = buildVoiceOptions(nativeVoices);
+      const [savedHistory, savedFavorites, savedSettings] = await Promise.all([readHistory(), readFavorites(), readSpeechSettings()]);
       setHistory(savedHistory);
       setFavorites(savedFavorites);
-      setVoices(available);
-      if (available[0]) setSelectedVoiceId(savedSettings.voiceId && available.some((voice) => voice.id === savedSettings.voiceId) ? savedSettings.voiceId : available[0].id);
+      if (savedSettings.voiceId) setSelectedVoiceId(savedSettings.voiceId);
       if (typeof savedSettings.rate === 'number') setRate(savedSettings.rate);
       if (typeof savedSettings.pitch === 'number') setPitch(savedSettings.pitch);
     } catch {
-      setVoiceLoadError(true);
-      setVoices([]);
-    } finally {
-      setVoicesLoading(false);
+      // Persisted data failures should not prevent device voices from loading.
     }
   };
 
@@ -82,7 +75,7 @@ export default function App() {
 
   if (!fontsLoaded) return null;
   if (voicesLoading) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><ActivityIndicator size="small" /><Text style={styles.loadingText}>Loading device voices…</Text></View></SafeAreaView>;
-  if (voiceLoadError || voices.length === 0) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><Text style={styles.emptyTitle}>{voiceLoadError ? 'Could not load device voices.' : 'No device voices are installed.'}</Text><Text style={styles.loadingText}>{voiceLoadError ? 'Check the device TTS service and try again.' : 'Install or enable a system text-to-speech voice, then retry.'}</Text><Pressable onPress={() => void loadVoices()} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View></SafeAreaView>;
+  if (voiceLoadError || voices.length === 0) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><Text style={styles.emptyTitle}>{voiceLoadError ? 'Could not load device voices.' : 'No device voices are installed.'}</Text><Text style={styles.loadingText}>{voiceLoadError ? 'Check the device TTS service and try again.' : 'Install or enable a system text-to-speech voice, then retry.'}</Text><Pressable onPress={() => { void loadVoices(); void reloadVoices(); }} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View></SafeAreaView>;
   const canGenerate = Boolean(text.trim() && selectedVoice);
   const wordCountLocal = (value: string) => value.trim() ? normalizeSpeechText(value).split(/\s+/).filter(Boolean).length : 0;
   const estimatedMinutes = estimatedSpeechSeconds(text, rate);
