@@ -3,18 +3,10 @@ import { chooseNativeVoice, getNativeVoices } from './native-voices';
 import { chunkSpeechText } from './text-utils';
 import type { SpeechRequest, SpeechResult, TtsProvider } from './tts';
 
-const PRODUCT_LOCALE: Record<string, string> = {
-  American: 'en-US',
-  British: 'en-GB',
-  Indian: 'en-IN',
-  Australian: 'en-AU',
-  Canadian: 'en-CA',
-  Russian: 'en',
-};
-
 function requestedLocale(request: SpeechRequest): string {
-  return PRODUCT_LOCALE[request.voice.accent] ?? request.voice.language;
+  return request.voice.language;
 }
+
 
 export class DeviceTtsProvider implements TtsProvider {
   async speak(request: SpeechRequest): Promise<SpeechResult> {
