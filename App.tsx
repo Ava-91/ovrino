@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from '@expo-google-fonts/vazirmatn';
 import { Vazirmatn_400Regular, Vazirmatn_500Medium, Vazirmatn_700Bold } from '@expo-google-fonts/vazirmatn';
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AlertCircle, ChevronRight, Play, Square, X } from 'lucide-react-native';
 import { DeviceTtsProvider } from './services/device-tts';
@@ -13,6 +13,8 @@ import { VoicePicker } from './components/VoicePicker';
 import { AudioPlayerCard } from './components/AudioPlayerCard';
 import { VoiceControls } from './components/VoiceControls';
 import { HistoryPanel } from './components/HistoryPanel';
+import { ReadingMode } from './components/ReadingMode';
+import { normalizeSpeechText, splitIntoSentences } from './services/text-utils';
 import { clearHistory, deleteHistoryItem, readHistory, saveHistoryItem, type SpeechHistoryItem } from './services/history';
 import { readFavorites, setFavorite, type FavoriteState } from './services/favorites';
 import { readSpeechSettings, saveSpeechSettings } from './services/settings';
@@ -35,7 +37,11 @@ export default function App() {
   const [favorites, setFavorites] = useState<FavoriteState>({ voices: [], history: [] });
   const [usage, setUsage] = useState<UsageSnapshot>({ requestTimestamps: [] });
   const [limitMessage, setLimitMessage] = useState('');
+  const [readingIndex, setReadingIndex] = useState(0);
+  const [readingActive, setReadingActive] = useState(false);
+  const readingToken = useRef(0);
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
+  const readingSentences = useMemo(() => splitIntoSentences(normalizeSpeechText(text)), [text]);
 
   useEffect(() => {
     if (selectedVoice) void saveSpeechSettings({ voiceId: selectedVoice.id, rate, pitch });
@@ -58,6 +64,43 @@ export default function App() {
   const canGenerate = Boolean(text.trim() && selectedVoice);
   const isSpeaking = generationState === 'speaking';
   const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
+  const speakReadingSentence = async (index: number, token: number) => {
+    if (!selectedVoice || token !== readingToken.current) return;
+    try {
+      await ttsProvider.speak({ text: readingSentences[index], voice: toTtsVoice(selectedVoice), settings: { rate, pitch } });
+      if (token === readingToken.current && readingActive && index < readingSentences.length - 1) {
+        const next = index + 1;
+        setReadingIndex(next);
+        void speakReadingSentence(next, token);
+      } else if (token === readingToken.current && index >= readingSentences.length - 1) {
+        setReadingActive(false);
+      }
+    } catch {
+      if (token === readingToken.current) setReadingActive(false);
+    }
+  };
+  const startReading = (index = readingIndex) => {
+    if (!selectedVoice || !readingSentences.length) return;
+    if (index === 0 && readingIndex === 0 && !readingActive && !reserveUsage(text.trim())) return;
+    readingToken.current += 1;
+    const token = readingToken.current;
+    setReadingIndex(index);
+    setReadingActive(true);
+    void ttsProvider.stop().then(() => speakReadingSentence(index, token));
+  };
+  const stopReading = async () => {
+    readingToken.current += 1;
+    setReadingActive(false);
+    await ttsProvider.stop();
+  };
+  const moveReading = (index: number) => {
+    if (index < 0 || index >= readingSentences.length) return;
+    readingToken.current += 1;
+    const token = readingToken.current;
+    setReadingIndex(index);
+    setReadingActive(true);
+    void ttsProvider.stop().then(() => speakReadingSentence(index, token));
+  };
   const stopSpeech = async () => { await ttsProvider.stop(); setGenerationState('idle'); };
   const previewVoice = async (voice: VoiceOption) => { await stopSpeech(); setGenerationState('speaking'); try { await ttsProvider.speak({ text: `This is the ${voice.name} voice preview.`, voice: toTtsVoice(voice), settings: { rate, pitch } }); setGenerationState('idle'); } catch { setGenerationState('error'); } };
   const reserveUsage = (spokenText: string) => { const textDecision = validateSpeechText(spokenText); if (!textDecision.allowed) { setLimitMessage(textDecision.reason === 'text-too-long' ? 'That text is too long for one speech request.' : 'Enter some text before generating speech.'); return false; } const now = Date.now(); const decision = checkUsage(now, usage); if (!decision.allowed) { setLimitMessage(`Usage limit reached. Try again in ${Math.ceil((decision.retryAfterMs ?? 0) / 60000)} minutes.`); return false; } setUsage(recordUsage(now, usage)); setLimitMessage(''); return true; };
@@ -75,6 +118,7 @@ export default function App() {
     {hasGenerated && canGenerate && <AudioPlayerCard text={text} voiceName={selectedVoice.name} playing={isSpeaking} onPlay={handleGenerate} onStop={stopSpeech} />}
     <View style={styles.section}><View style={styles.sectionHeader}><Text style={styles.label}>TEXT</Text><Text style={styles.characterCount}>{text.length}/5,000</Text></View><TextInput multiline maxLength={5000} onChangeText={(value) => { setText(value); setLimitMessage(''); if (generationState === 'error') setGenerationState('idle'); }} placeholder="Write or paste something..." placeholderTextColor="#626978" style={styles.textInput} textAlignVertical="top" value={text} /></View>
     <View style={styles.section}><View style={styles.sectionHeader}><Text style={styles.label}>VOICE</Text><Text style={styles.characterCount}>{selectedVoice.accent}</Text></View><View style={styles.voiceRow}><Pressable accessibilityRole="button" accessibilityLabel={`Selected voice: ${selectedVoice.name}. Tap to browse voices.`} onPress={() => setPickerVisible(true)} style={({ pressed }) => [styles.voiceCard, pressed && styles.voiceCardPressed]}><View style={styles.voiceIcon}><Text style={styles.voiceIconText}>{selectedVoice.name.charAt(0)}</Text></View><View style={styles.voiceInfo}><Text style={styles.voiceName}>{selectedVoice.name}</Text><Text style={styles.voiceMeta}>{selectedVoice.accent} · {selectedVoice.gender} · Tap to change</Text></View><ChevronRight size={22} color="#727B8C" strokeWidth={1.7} /></Pressable><FavoriteButton active={favorites.voices.includes(selectedVoice.id)} label={`${selectedVoice.name} voice`} onPress={() => toggleVoiceFavorite(selectedVoice.id)} /></View></View>
+    <ReadingMode sentences={readingSentences} currentIndex={readingIndex} active={readingActive} onStart={() => startReading()} onStop={stopReading} onPrevious={() => moveReading(readingIndex - 1)} onNext={() => moveReading(readingIndex + 1)} />
     <VoiceControls rate={rate} pitch={pitch} presets={VOICE_PRESETS} onRateChange={setRate} onPitchChange={setPitch} onPreset={applyPreset} />
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canGenerate, busy: isSpeaking }} accessibilityLabel={isSpeaking ? 'Stop speaking' : 'Generate voice'} disabled={!canGenerate} onPress={handleGenerate} style={({ pressed }) => [styles.generateButton, !canGenerate && styles.generateButtonDisabled, pressed && canGenerate && styles.generateButtonPressed]}>{isSpeaking ? <><Square size={13} color="#0B0D12" fill="#0B0D12" strokeWidth={2} /><Text style={styles.generateText}>Stop Speaking</Text></> : <>{generationState === 'error' ? <AlertCircle size={16} color="#0B0D12" strokeWidth={2.2} /> : <Play size={15} color="#0B0D12" fill="#0B0D12" strokeWidth={1.8} />}<Text style={styles.generateText}>{generationState === 'error' ? 'Try Again' : 'Generate Voice'}</Text></>}</Pressable>
     {limitMessage && <Text accessibilityRole="alert" style={styles.limitMessage}>{limitMessage}</Text>}{isSpeaking && <View style={styles.statusMessage}><ActivityIndicator size="small" /><Text style={styles.statusText}>Speaking with {selectedVoice.name}</Text></View>}{generationState === 'error' && !limitMessage && <Text accessibilityRole="alert" style={styles.errorMessage}>Ovrino couldn't start speech. Check the selected device voice and try again.</Text>}
