@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunkSpeechText, normalizeSpeechText, splitIntoSentences, wordCount } from './text-utils';
+import { chunkSpeechText, detectTextLanguage, normalizeSpeechText, splitIntoSentences, wordCount } from './text-utils';
 
 describe('text-utils', () => {
   it('normalizes whitespace without changing paragraph boundaries', () => {
@@ -39,4 +39,12 @@ describe('chunkSpeechText', () => {
     expect(chunks.every((chunk) => chunk.length <= 20)).toBe(true);
     expect(chunks.join(' ')).toBe('one two three four five six seven eight nine ten');
   });
+});
+
+
+describe('detectTextLanguage', () => {
+  it('detects Persian text', () => expect(detectTextLanguage('سلام دنیا')).toBe('fa'));
+  it('detects Arabic text', () => expect(detectTextLanguage('مرحبا بالعالم')).toBe('ar'));
+  it('detects English text', () => expect(detectTextLanguage('Hello world')).toBe('en'));
+  it('uses mixed fallback for Persian and Latin text', () => expect(detectTextLanguage('سلام world')).toBe('mixed'));
 });
