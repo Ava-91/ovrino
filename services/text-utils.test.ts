@@ -48,3 +48,9 @@ describe('detectTextLanguage', () => {
   it('detects English text', () => expect(detectTextLanguage('Hello world')).toBe('en'));
   it('uses mixed fallback for Persian and Latin text', () => expect(detectTextLanguage('سلام world')).toBe('mixed'));
 });
+
+
+describe('Persian sentence punctuation', () => {
+  it('splits on Persian question marks', () => expect(splitIntoSentences('حالت چطوره؟ خوبم.')).toEqual(['حالت چطوره؟', 'خوبم.']));
+  it('splits on Arabic semicolons', () => expect(splitIntoSentences('اول؛ دوم.')).toEqual(['اول؛', 'دوم.']));
+});
