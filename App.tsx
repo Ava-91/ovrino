@@ -47,8 +47,11 @@ export default function App() {
     if (selectedVoice) void saveSpeechSettings({ voiceId: selectedVoice.id, rate, pitch });
   }, [selectedVoice, rate, pitch]);
 
-  useEffect(() => {
-    void Promise.all([readHistory(), readFavorites(), getNativeVoices(), readSpeechSettings()]).then(([savedHistory, savedFavorites, nativeVoices, savedSettings]) => {
+  const loadVoices = async () => {
+    setVoicesLoading(true);
+    setVoiceLoadError(false);
+    try {
+      const [savedHistory, savedFavorites, nativeVoices, savedSettings] = await Promise.all([readHistory(), readFavorites(), getNativeVoices(), readSpeechSettings()]);
       const available = buildVoiceOptions(nativeVoices);
       setHistory(savedHistory);
       setFavorites(savedFavorites);
@@ -56,12 +59,22 @@ export default function App() {
       if (available[0]) setSelectedVoiceId(savedSettings.voiceId && available.some((voice) => voice.id === savedSettings.voiceId) ? savedSettings.voiceId : available[0].id);
       if (typeof savedSettings.rate === 'number') setRate(savedSettings.rate);
       if (typeof savedSettings.pitch === 'number') setPitch(savedSettings.pitch);
-    });
-    setVoicesLoading(false); return () => { void ttsProvider.stop(); };
+    } catch {
+      setVoiceLoadError(true);
+      setVoices([]);
+    } finally {
+      setVoicesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadVoices();
+    return () => { void ttsProvider.stop(); };
   }, []);
 
   if (!fontsLoaded) return null;
   if (voicesLoading) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><ActivityIndicator size="small" /><Text style={styles.loadingText}>Loading device voices…</Text></View></SafeAreaView>;
+  if (voiceLoadError || voices.length === 0) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><Text style={styles.emptyTitle}>{voiceLoadError ? 'Could not load device voices.' : 'No device voices are installed.'}</Text><Text style={styles.loadingText}>{voiceLoadError ? 'Check the device TTS service and try again.' : 'Install or enable a system text-to-speech voice, then retry.'}</Text><Pressable onPress={() => void loadVoices()} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View></SafeAreaView>;
   const canGenerate = Boolean(text.trim() && selectedVoice);
   const isSpeaking = generationState === 'speaking';
   const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
