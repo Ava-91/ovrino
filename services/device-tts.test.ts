@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const speech = {
+const speech = vi.hoisted(() => ({
   stop: vi.fn().mockResolvedValue(undefined),
   speak: vi.fn((_text: string, options: { onDone?: () => void; onStopped?: () => void }) => options.onDone?.()),
-};
+}));
 
 vi.mock('expo-speech', () => speech);
 
