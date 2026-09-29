@@ -37,7 +37,13 @@ export default function App() {
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
 
   useEffect(() => {
-    void Promise.all([readHistory(), readFavorites()]).then(([savedHistory, savedFavorites]) => { setHistory(savedHistory); setFavorites(savedFavorites); });
+    void Promise.all([readHistory(), readFavorites(), getNativeVoices()]).then(([savedHistory, savedFavorites, nativeVoices]) => {
+      const available = buildVoiceOptions(nativeVoices);
+      setHistory(savedHistory);
+      setFavorites(savedFavorites);
+      setVoices(available);
+      if (available[0]) setSelectedVoiceId(available[0].id);
+    });
     return () => { void ttsProvider.stop(); };
   }, []);
 
