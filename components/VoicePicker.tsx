@@ -15,6 +15,7 @@ type VoicePickerProps = {
 export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], onToggleFavorite, onSelect, onPreview }: VoicePickerProps) {
   const [query, setQuery] = useState('');
   const [accent, setAccent] = useState('All');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [availability, setAvailability] = useState<'All' | 'Offline'>('All');
   const accents = useMemo(() => ['All', ...Array.from(new Set(voices.map((voice) => voice.accent)))], [voices]);
   const filtered = useMemo(() => {
@@ -22,10 +23,11 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
     return voices.filter((voice) => {
       const matchesAccent = accent === 'All' || voice.accent === accent;
       const matchesAvailability = availability === 'All' || !voice.requiresNetwork;
+      const matchesFavorite = !favoritesOnly || favoriteVoiceIds.includes(voice.id);
       const haystack = `${voice.name} ${voice.accent} ${voice.gender} ${voice.age}`.toLowerCase();
-      return matchesAccent && matchesAvailability && (!normalizedQuery || haystack.includes(normalizedQuery));
+      return matchesAccent && matchesAvailability && matchesFavorite && (!normalizedQuery || haystack.includes(normalizedQuery));
     });
-  }, [accent, availability, query, voices]);
+  }, [accent, availability, favoritesOnly, favoriteVoiceIds, query, voices]);
 
   return (
     <View style={styles.container}>
@@ -99,6 +101,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   search: { backgroundColor: '#13161D', borderColor: '#252A35', borderRadius: 14, borderWidth: 1, color: '#F4F6FA', fontFamily: 'Vazirmatn_400Regular', fontSize: 14, paddingHorizontal: 14, paddingVertical: 12 },
   filters: { flexGrow: 0, marginVertical: 12, minHeight: 38 },
+  filterRow: { alignItems: 'center', flexDirection: 'row', marginVertical: 4 },
+  filterList: { flex: 1, minHeight: 38 },
   filter: { alignItems: 'center', borderColor: '#252A35', borderRadius: 12, borderWidth: 1, height: 38, justifyContent: 'center', marginRight: 8, minWidth: 58, paddingHorizontal: 12 },
   filterActive: { backgroundColor: '#A9B3FF', borderColor: '#A9B3FF' },
   filterText: { color: '#858D9D', fontFamily: 'Vazirmatn_500Medium', fontSize: 12 },
