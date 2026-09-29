@@ -57,7 +57,7 @@ export function detectTextLanguage(text: string): DetectedTextLanguage {
   const faSpecific = (text.match(/[پچژگک‌ی]/g) ?? []).length;
   const arabic = (text.match(/[ء-ي]/g) ?? []).length;
   const latin = (text.match(/[A-Za-z]/g) ?? []).length;
-  if (faSpecific > 0 && faSpecific >= arabic * 0.15) return latin > 0 ? 'mixed' : 'fa';
+  if (faSpecific > 0) return latin > 0 ? 'mixed' : 'fa';
   if (arabic > 0 && arabic >= latin) return 'ar';
   if (latin > 0) return 'en';
   return 'unknown';
