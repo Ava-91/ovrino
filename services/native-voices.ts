@@ -13,8 +13,6 @@ export type VoiceOption = {
   name: string;
   accent: string;
   language: string;
-  gender: 'Female' | 'Male' | 'Neutral' | 'Unknown';
-  age: 'Young' | 'Adult' | 'Mature' | 'Unknown';
   description: string;
   nativeVoiceId: string;
   nativeLanguage: string;
@@ -47,7 +45,7 @@ export function buildVoiceOptions(voices: NativeVoice[]): VoiceOption[] {
     const language = normalizeLanguage(voice.language);
     const [base, region] = language.split('-');
     const accent = region ? `${base.toUpperCase()} (${region.toUpperCase()})` : base.toUpperCase();
-    return { id: voice.identifier, name: voice.name, accent, language: voice.language, gender: 'Unknown', age: 'Unknown', description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, requiresNetwork: Boolean(voice.requiresNetwork), quality: voice.quality, available: true };
+    return { id: voice.identifier, name: voice.name, accent, language: voice.language, description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, requiresNetwork: Boolean(voice.requiresNetwork), quality: voice.quality, available: true };
   });
 }
 

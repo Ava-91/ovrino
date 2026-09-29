@@ -2,7 +2,6 @@ export type VoiceProfile = {
   id: string;
   name: string;
   accent: string;
-  gender: string;
   language: string;
   nativeVoiceId?: string;
 };
