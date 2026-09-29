@@ -21,6 +21,7 @@ export type SpeechRequest = {
 export type SpeechResult = {
   mode: 'device';
   voice: VoiceProfile;
+  stopped?: boolean;
 };
 
 export interface TtsProvider {
