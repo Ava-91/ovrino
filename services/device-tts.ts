@@ -1,5 +1,4 @@
 import * as Speech from 'expo-speech';
-import { chooseNativeVoice } from './native-voices';
 import { chunkSpeechText } from './text-utils';
 import type { SpeechRequest, SpeechResult, TtsProvider } from './tts';
 
