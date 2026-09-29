@@ -15,13 +15,14 @@ import { AudioPlayerCard } from './components/AudioPlayerCard';
 import { VoiceControls } from './components/VoiceControls';
 import { HistoryPanel } from './components/HistoryPanel';
 import { ReadingMode } from './components/ReadingMode';
-import { detectTextLanguage, estimatedSpeechSeconds, normalizeSpeechText, splitIntoSentences } from './services/text-utils';
+import { detectTextLanguage, estimatedSpeechSeconds, normalizeSpeechText } from './services/text-utils';
 import { clearHistory, deleteHistoryItem, readHistory, saveHistoryItem, type SpeechHistoryItem } from './services/history';
 import { readFavorites, setFavorite, type FavoriteState } from './services/favorites';
 import { readSpeechSettings, saveSpeechSettings } from './services/settings';
 import { FavoriteButton } from './components/FavoriteButton';
 import { validateSpeechText } from './services/usage-limits';
 import { useSpeechSession } from './hooks/useSpeechSession';
+import { useReadingText } from './hooks/useReadingText';
 
 const ttsProvider = new DeviceTtsProvider();
 type GenerationState = 'idle' | 'speaking' | 'error';
@@ -47,10 +48,8 @@ export default function App() {
   const speechSession = useSpeechSession();
   const selectedVoice = useMemo(() => voices.find((voice) => voice.id === selectedVoiceId) ?? voices[0], [selectedVoiceId, voices]);
   const suggestedVoice = useMemo(() => { const language = detectTextLanguage(text); if (language !== 'fa' && language !== 'ar' && language !== 'en') return undefined; return voices.find((voice) => languageMatches(voice.nativeLanguage, language)); }, [text, voices]);
-  const readingSentences = useMemo(() => splitIntoSentences(normalizeSpeechText(text)), [text]);
-  const readingParagraphs = useMemo(() => normalizeSpeechText(text).split(/\n{2,}/).map((paragraph) => splitIntoSentences(paragraph)).filter((paragraph) => paragraph.length > 0), [text]);
-  const paragraphStarts = useMemo(() => readingParagraphs.reduce<number[]>((starts, paragraph, index) => { starts.push(index === 0 ? 0 : starts[index - 1] + readingParagraphs[index - 1].length); return starts; }, []), [readingParagraphs]);
-  const currentParagraph = useMemo(() => Math.max(0, paragraphStarts.findIndex((start, index) => readingIndex < start + readingParagraphs[index].length)), [paragraphStarts, readingParagraphs, readingIndex]);
+  const { sentences: readingSentences, paragraphs: readingParagraphs, paragraphStarts, getParagraphIndex } = useReadingText(text);
+  const currentParagraph = getParagraphIndex(readingIndex);
 
   useEffect(() => {
     if (selectedVoice) void saveSpeechSettings({ voiceId: selectedVoice.id, rate, pitch });
