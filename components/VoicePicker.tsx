@@ -15,15 +15,17 @@ type VoicePickerProps = {
 export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], onToggleFavorite, onSelect, onPreview }: VoicePickerProps) {
   const [query, setQuery] = useState('');
   const [accent, setAccent] = useState('All');
+  const [availability, setAvailability] = useState<'All' | 'Offline'>('All');
   const accents = useMemo(() => ['All', ...Array.from(new Set(voices.map((voice) => voice.accent)))], [voices]);
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return voices.filter((voice) => {
       const matchesAccent = accent === 'All' || voice.accent === accent;
+      const matchesAvailability = availability === 'All' || !voice.requiresNetwork;
       const haystack = `${voice.name} ${voice.accent} ${voice.gender} ${voice.age}`.toLowerCase();
-      return matchesAccent && (!normalizedQuery || haystack.includes(normalizedQuery));
+      return matchesAccent && matchesAvailability && (!normalizedQuery || haystack.includes(normalizedQuery));
     });
-  }, [accent, query, voices]);
+  }, [accent, availability, query, voices]);
 
   return (
     <View style={styles.container}>
@@ -53,7 +55,7 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
           const selected = item.id === selectedVoiceId;
           const favorite = favoriteVoiceIds.includes(item.id);
           const available = item.available !== false;
-          const metadata = [item.accent, item.gender !== 'Unknown' ? item.gender : 'Voice details unavailable', item.age !== 'Unknown' ? item.age : null].filter(Boolean).join(' · ');
+          const metadata = [item.accent, item.requiresNetwork ? 'Network voice' : 'Offline voice', item.gender !== 'Unknown' ? item.gender : 'Voice details unavailable', item.age !== 'Unknown' ? item.age : null].filter(Boolean).join(' · ');
           return (
             <View style={[styles.card, selected && styles.cardSelected, !available && styles.cardUnavailable]}>
               <Pressable

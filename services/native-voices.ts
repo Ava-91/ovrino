@@ -27,7 +27,7 @@ export async function getNativeVoices(): Promise<NativeVoice[]> {
   }));
 }
 
-export function buildVoiceOptions(voices: NativeVoice[]): VoiceOption[] {\n  return voices.map((voice) => {\n    const language = normalizeLanguage(voice.language);\n    const [base, region] = language.split('-');\n    const accent = region ? `${base.toUpperCase()} (${region.toUpperCase()})` : base.toUpperCase();\n    return { id: voice.identifier, name: voice.name, accent, language: voice.language, gender: 'Unknown', age: 'Unknown', description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, available: true };\n  });\n}\n\nexport function normalizeLanguage(language: string): string {
+export function buildVoiceOptions(voices: NativeVoice[]): VoiceOption[] {\n  return voices.map((voice) => {\n    const language = normalizeLanguage(voice.language);\n    const [base, region] = language.split('-');\n    const accent = region ? `${base.toUpperCase()} (${region.toUpperCase()})` : base.toUpperCase();\n    return { id: voice.identifier, name: voice.name, accent, language: voice.language, gender: 'Unknown', age: 'Unknown', description: `${voice.language}${voice.quality ? ` · ${voice.quality}` : ''}${voice.requiresNetwork ? ' · may require network' : ' · device voice'}`, nativeVoiceId: voice.identifier, nativeLanguage: voice.language, requiresNetwork: Boolean(voice.requiresNetwork), available: true };\n  });\n}\n\nexport function normalizeLanguage(language: string): string {
   return language.trim().toLowerCase().replace('_', '-');
 }
 
