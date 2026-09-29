@@ -2,139 +2,70 @@
 
 > **Give your words a voice.**
 
-Ovrino is a voice-focused text-to-speech mobile app built with React Native and Expo. It is designed to make choosing, shaping, and listening to different voices simple enough for everyday use and flexible enough for learning, narration, accessibility, and creative projects.
+Ovrino is a small, local-first text-to-speech mobile app built with React Native and Expo. It makes the voices already installed on your device easier to discover, control, and use for reading.
 
-## ✨ What Ovrino is for
+## Current MVP
 
-- 🎧 Listen to text instead of reading it
-- 📚 Study and self-learning
-- 🗣️ English listening practice
-- 🌎 Explore different accents and voices
-- 🎬 Create voiceovers for videos
-- 📖 Narration and storytelling
-- ♿ Reading assistance and accessibility
-- 💤 Casual listening
+**Write or paste text → choose an installed device voice → adjust speed/pitch → speak.**
 
-## 🚧 Current status
+Reading Mode can split text into sentences and speak them sequentially. History, favorites, and speech settings are stored locally on the device.
 
-Ovrino is in **early development**.
+The MVP uses the device's native TTS engine through expo-speech. There is no API key, backend, account, cloud voice provider, or generated-audio service required.
 
-The current mobile prototype contains the first interface for entering text, selecting a placeholder voice, and preparing a generation flow. Real TTS generation is intentionally not connected yet.
+## Tech stack
 
-The first MVP target is:
+- React Native
+- Expo SDK 54
+- TypeScript
+- expo-speech
+- Vazirmatn + Young Serif
+- Vitest for pure utility tests
 
-**Enter text → choose a voice → generate real speech → play it.**
-
-## 🛠️ Tech stack
-
-- **React Native** — mobile UI
-- **Expo SDK 54** — development and native tooling
-- **TypeScript** — application code
-- **Vazirmatn** — interface typography and Persian support
-- **Young Serif** — display typography
-
-A TTS provider and secure backend will be selected during the real-TTS phase.
-
-## 🏗️ Planned architecture
+## Architecture
 
 ```text
-Mobile app
-    │ HTTPS
-    ▼
-Ovrino backend
-    │
-    ▼
-TTS provider
-    │
-    ▼
-Generated audio
+Ovrino
+  ├── Text input + Reading Mode
+  ├── Installed device voices
+  │       ↓
+  │   expo-speech
+  │       ↓
+  │   Native device TTS engine
+  └── Local file storage
+          ├── history
+          ├── favorites
+          └── speech settings
 ```
 
-Provider API keys will remain server-side and will never be embedded in the mobile client.
+A future provider/backend is optional and should only be added if device TTS cannot satisfy a concrete product requirement.
 
-## 🚀 Development
+## Development
 
-### Requirements
-
-- Node.js + npm
-- Android device/emulator or supported iOS development environment
-- Expo Go for the current development workflow
-
-### Install
+Requirements: Node.js + npm, plus an Android device/emulator or supported iOS environment.
 
 ```bash
 npm install
-```
-
-### Start
-
-```bash
 npm start
+npm test
 ```
 
-Then scan the Expo QR code with Expo Go.
+## Roadmap
 
-Useful commands:
+- [x] Local device TTS
+- [x] Installed voice discovery
+- [x] Voice search/filtering and previews
+- [x] Speed/pitch controls and presets
+- [x] Local history and favorites
+- [x] Local speech settings
+- [x] Sentence-by-sentence Reading Mode
+- [x] Honest device-TTS playback UI
+- [x] Pure utility tests
+- [ ] Accessibility review
+- [ ] Performance/device compatibility testing
+- [ ] Production Android/iOS builds
 
-```bash
-npm run android
-npm run ios
-npm run web
-npx expo-doctor
-npx expo install --check
-```
+### Future, not required for the MVP
 
-## 📁 Documentation
-
-Detailed project documentation lives in [`docs/`](./docs/):
-
-- [Product direction](./docs/PRODUCT.md)
-- [Roadmap](./docs/ROADMAP.md)
-- [Architecture](./docs/ARCHITECTURE.md)
-- [Voice system](./docs/VOICE_SYSTEM.md)
-- [API plan](./docs/API.md)
-- [Security](./docs/SECURITY.md)
-- [Contributing](./docs/CONTRIBUTING.md)
-
-## 🗺️ Roadmap
-
-### Foundation
-- [x] Expo mobile project
-- [x] Initial Ovrino interface
-- [x] Dark visual identity
-- [x] Young Serif + Vazirmatn
-
-### Voice system
-- [ ] Real voice picker
-- [ ] Accent categories
-- [ ] Voice previews
-- [ ] Voice metadata
-
-### TTS MVP
-- [ ] Select TTS provider
-- [ ] Secure backend
-- [ ] Real speech generation
-- [ ] Loading and error states
-- [ ] Audio playback
-
-### Beyond MVP
-- [ ] Speed and voice controls
-- [ ] Learning mode
-- [ ] History and favorites
-- [ ] Audio export/sharing
-- [ ] Creator/narration features
-- [ ] Production builds and store release
-
-See the [full roadmap](./docs/ROADMAP.md).
-
-## 🔐 Security
-
-Never commit API keys, tokens, database credentials, or signing credentials. See [`docs/SECURITY.md`](./docs/SECURITY.md).
-
-## 📄 License
-
-See [LICENSE](./LICENSE).
-
----
+Generated audio files, cloud TTS, backend/API, authentication, cloud sync, audio export from generated files, and advanced creator features.
 
 Ovrino is being built one voice at a time. 🔊

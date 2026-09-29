@@ -6,31 +6,38 @@
 - React Native 0.81
 - React 19
 - TypeScript
-- Expo Go for development
-- Vazirmatn and Young Serif for typography
+- expo-speech for native device TTS
+- Vazirmatn and Young Serif
 
-## Planned architecture
+## Current architecture
 
 ```text
-Mobile app
-   |
-   | HTTPS
-   v
-Ovrino backend
-   |
-   +--> TTS provider
-   |
-   +--> Audio storage (when needed)
-   |
-   +--> Database/auth (when needed)
-```
+Mobile UI
+  ├── Text input
+  ├── Voice picker
+  ├── Voice controls
+  └── Reading Mode
+        ↓
+  DeviceTtsProvider
+        ↓
+  expo-speech
+        ↓
+  Installed native TTS voices
 
-The mobile app should never contain a production TTS secret. Provider credentials belong on the backend.
+Local file storage
+  ├── history.json
+  ├── favorites.json
+  └── settings.json
+```
 
 ## Principles
 
 1. Keep the first release small and reliable.
-2. Keep provider-specific code behind a service boundary.
-3. Do not commit API keys or generated secrets.
-4. Prefer platform-native audio playback and caching where practical.
-5. Make voice metadata independent from the UI so providers can be changed later.
+2. Treat installed device voices as the source of truth.
+3. Keep device TTS behind a provider boundary.
+4. Do not require network services for the core reading flow.
+5. Keep history, favorites, and settings local.
+6. Do not pretend device TTS is a generated audio file.
+7. Add cloud infrastructure only when a concrete product requirement justifies it.
+
+If Ovrino eventually needs downloadable audio or capabilities unavailable from native TTS, a remote provider can be added behind the existing TTS interface. Provider secrets must remain server-side.
