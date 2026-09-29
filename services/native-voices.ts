@@ -18,6 +18,8 @@ export type VoiceOption = {
   description: string;
   nativeVoiceId: string;
   nativeLanguage: string;
+  requiresNetwork: boolean;
+  quality?: string;
   available: true;
 };
 
