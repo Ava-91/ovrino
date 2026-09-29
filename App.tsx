@@ -85,7 +85,7 @@ export default function App() {
   if (voiceLoadError || voices.length === 0) return <SafeAreaView style={styles.safeArea}><StatusBar style="light" /><View style={styles.loadingState}><Text style={styles.emptyTitle}>{voiceLoadError ? 'Could not load device voices.' : 'No device voices are installed.'}</Text><Text style={styles.loadingText}>{voiceLoadError ? 'Check the device TTS service and try again.' : 'Install or enable a system text-to-speech voice, then retry.'}</Text><Pressable onPress={() => void loadVoices()} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View></SafeAreaView>;
   const canGenerate = Boolean(text.trim() && selectedVoice);
   const isSpeaking = generationState === 'speaking';
-  const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, gender: voice.gender, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
+  const toTtsVoice = (voice: VoiceOption): VoiceProfile => ({ id: voice.id, name: voice.name, accent: voice.accent, language: voice.nativeLanguage, nativeVoiceId: voice.nativeVoiceId });
   const speakReadingSentence = async (index: number, token: number) => {
     if (!selectedVoice || !speechSession.isCurrent(token)) return;
     try {
