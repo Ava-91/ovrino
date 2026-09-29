@@ -1,5 +1,5 @@
 import * as Speech from 'expo-speech';
-import { chooseNativeVoice, getNativeVoices } from './native-voices';
+import { chooseNativeVoice } from './native-voices';
 import { chunkSpeechText } from './text-utils';
 import type { SpeechRequest, SpeechResult, TtsProvider } from './tts';
 
@@ -11,9 +11,8 @@ function requestedLocale(request: SpeechRequest): string {
 export class DeviceTtsProvider implements TtsProvider {
   async speak(request: SpeechRequest): Promise<SpeechResult> {
     await Speech.stop();
-    const voices = await getNativeVoices();
     const locale = requestedLocale(request);
-    const matchingVoice = chooseNativeVoice(voices, locale, request.voice.nativeVoiceId);
+    const matchingVoice = request.voice.nativeVoiceId ? { identifier: request.voice.nativeVoiceId, name: request.voice.name, language: request.voice.language } : undefined;
 
     const chunks = chunkSpeechText(request.text);
     let stopped = false;
