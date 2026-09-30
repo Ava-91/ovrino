@@ -1,12 +1,20 @@
 export function normalizeSpeechText(text: string): string {
-  return text
+  const normalized = text
     .replace(/\r\n?/g, '\n')
     .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/[ \t]+([,.;:!?؟،؛])/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/(?<!\n)[ \t]*\n[ \t]*(?!\n)/g, ' ')
-    .trim();
+    .replace(/\n{3,}/g, '\n\n');
+
+  return normalized
+    .split('\n\n')
+    .map((paragraph) =>
+      paragraph
+        .replace(/\n/g, ' ')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/[ \t]+([,.;:!?؟،؛])/g, '$1')
+        .trim(),
+    )
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 export function splitIntoSentences(text: string): string[] {
@@ -22,7 +30,6 @@ export function splitIntoSentences(text: string): string[] {
 export function wordCount(text: string): number {
   return normalizeSpeechText(text).split(/\s+/).filter(Boolean).length;
 }
-
 
 export function chunkSpeechText(text: string, maxLength = 900): string[] {
   const normalized = normalizeSpeechText(text);
@@ -50,7 +57,6 @@ export function chunkSpeechText(text: string, maxLength = 900): string[] {
   return chunks.filter(Boolean);
 }
 
-
 export type DetectedTextLanguage = 'fa' | 'ar' | 'en' | 'mixed' | 'unknown';
 
 export function detectTextLanguage(text: string): DetectedTextLanguage {
@@ -58,11 +64,10 @@ export function detectTextLanguage(text: string): DetectedTextLanguage {
   const arabic = (text.match(/[ء-ي]/g) ?? []).length;
   const latin = (text.match(/[A-Za-z]/g) ?? []).length;
   if (faSpecific > 0) return latin > 0 ? 'mixed' : 'fa';
-  if (arabic > 0 && arabic >= latin) return 'ar';
+  if (arabic > 0) return latin > 0 ? 'mixed' : 'ar';
   if (latin > 0) return 'en';
   return 'unknown';
 }
-
 
 export function estimatedSpeechSeconds(text: string, rate = 1): number {
   const words = wordCount(text);

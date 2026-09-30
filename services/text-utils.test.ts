@@ -3,7 +3,7 @@ import { chunkSpeechText, detectTextLanguage, estimatedSpeechSeconds, normalizeS
 
 describe('text-utils', () => {
   it('normalizes whitespace without changing paragraph boundaries', () => {
-    expect(normalizeSpeechText('  Hello   world.\n\n  Next line!  ')).toBe('Hello world.\nNext line!');
+    expect(normalizeSpeechText('  Hello   world.\n\n  Next line!  ')).toBe('Hello world.\n\nNext line!');
   });
 
   it('splits English and Persian sentence punctuation', () => {
@@ -19,18 +19,17 @@ describe('text-utils', () => {
   });
 
   it('cleans Unicode whitespace and spaces before punctuation', () => {
-    expect(normalizeSpeechText('Hello\\u00A0 world  !\\n\\n\\n Next  line')).toBe('Hello world!\\n\\nNext line');
+    expect(normalizeSpeechText('Hello\u00A0 world  !\n\n\n Next  line')).toBe('Hello world!\n\nNext line');
   });
 
   it('preserves paragraph boundaries while cleaning line whitespace', () => {
-    expect(normalizeSpeechText('First\\n\\n\\nSecond')).toBe('First\\n\\nSecond');
+    expect(normalizeSpeechText('First\n\n\nSecond')).toBe('First\n\nSecond');
   });
 
   it('counts normalized words', () => {
     expect(wordCount('  one   two\nthree ')).toBe(3);
   });
 });
-
 
 describe('chunkSpeechText', () => {
   it('keeps short text in one chunk', () => expect(chunkSpeechText('Hello world.')).toEqual(['Hello world.']));
@@ -41,7 +40,6 @@ describe('chunkSpeechText', () => {
   });
 });
 
-
 describe('detectTextLanguage', () => {
   it('detects Persian text', () => expect(detectTextLanguage('سلام دنیا')).toBe('fa'));
   it('detects Arabic text', () => expect(detectTextLanguage('مرحبا بالعالم')).toBe('ar'));
@@ -49,12 +47,10 @@ describe('detectTextLanguage', () => {
   it('uses mixed fallback for Persian and Latin text', () => expect(detectTextLanguage('سلام world')).toBe('mixed'));
 });
 
-
 describe('Persian sentence punctuation', () => {
   it('splits on Persian question marks', () => expect(splitIntoSentences('حالت چطوره؟ خوبم.')).toEqual(['حالت چطوره؟', 'خوبم.']));
   it('splits on Arabic semicolons', () => expect(splitIntoSentences('اول؛ دوم.')).toEqual(['اول؛', 'دوم.']));
 });
-
 
 describe('estimatedSpeechSeconds', () => {
   it('estimates from normalized word count and rate', () => expect(estimatedSpeechSeconds('one two three', 1)).toBe(1));
