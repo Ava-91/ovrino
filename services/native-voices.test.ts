@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('expo-speech', () => ({
+  getAvailableVoicesAsync: vi.fn(),
+}));
+
 import { chooseNativeVoice } from './native-voices';
 
 describe('native voice matching', () => {
