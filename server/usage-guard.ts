@@ -1,4 +1,4 @@
-import { MAX_REQUESTS_PER_WINDOW, MAX_TEXT_LENGTH, WINDOW_MS, type UsageSnapshot } from '../services/usage-limits';
+import { MAX_REQUESTS_PER_WINDOW, MAX_TEXT_LENGTH, WINDOW_MS, type UsageSnapshot } from './usage-limits';
 
 export type GuardResult = { ok: true; snapshot: UsageSnapshot } | { ok: false; status: 400 | 429; code: 'INVALID_TEXT' | 'TEXT_TOO_LONG' | 'RATE_LIMITED'; retryAfterMs?: number; snapshot: UsageSnapshot };
 

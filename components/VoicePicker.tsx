@@ -67,7 +67,7 @@ export function VoicePicker({ voices, selectedVoiceId, favoriteVoiceIds = [], on
         renderItem={({ item }) => {
           const selected = item.id === selectedVoiceId;
           const favorite = favoriteVoiceIds.includes(item.id);
-          const available = item.available !== false;
+          const available = item.available;
           const metadata = [item.nativeLanguage, item.quality ?? 'Quality unavailable', item.requiresNetwork ? 'Network voice' : 'Offline voice'].join(' · ');
           return (
             <View style={[styles.card, selected && styles.cardSelected, !available && styles.cardUnavailable]}>
