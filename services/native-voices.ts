@@ -36,7 +36,7 @@ export async function getNativeVoices(): Promise<NativeVoice[]> {
     name: voice.name,
     language: voice.language,
     quality: voice.quality,
-    requiresNetwork: voice.requiresNetwork,
+    requiresNetwork: 'requiresNetwork' in voice ? Boolean(voice.requiresNetwork) : false,
   }));
 }
 
