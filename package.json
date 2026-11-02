@@ -6,7 +6,7 @@
     "@expo-google-fonts/vazirmatn": "^0.4.1",
     "@expo-google-fonts/young-serif": "^0.4.0",
     "expo": "^54.0.0",
-    "expo-font": "~14.0.12",
+    "expo-font": "~58.0.11",
     "expo-speech": "~14.0.1",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^1.37.0",
