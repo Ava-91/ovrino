@@ -1,0 +1,25 @@
+name: Shared automation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    uses: Ava-91/Ava-91/.github/workflows/reusable-node.yml@main
+    with:
+      node-version: "24"
+      install-command: "npm ci"
+      lint-command: "npx tsc --noEmit"
+      test-command: "npm test"
+      build-command: "npm run build --if-present"
+  security:
+    uses: Ava-91/Ava-91/.github/workflows/reusable-security.yml@main
+  docs:
+    uses: Ava-91/Ava-91/.github/workflows/reusable-docs.yml@main
+    with:
+      paths: "./README.md"
