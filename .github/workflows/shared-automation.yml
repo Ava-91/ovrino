@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   quality:
-    uses: Ava-91/Ava-91/.github/workflows/reusable-node.yml@main
+    uses: Ava-91/Ava-91/.github/workflows/reusable-node.yml@automation/reusable-workflow-inputs
     with:
       node-version: "24"
       install-command: "npm ci"
@@ -18,8 +18,8 @@ jobs:
       test-command: "npm test"
       build-command: "npm run build --if-present"
   security:
-    uses: Ava-91/Ava-91/.github/workflows/reusable-security.yml@main
+    uses: Ava-91/Ava-91/.github/workflows/reusable-security.yml@automation/reusable-workflow-inputs
   docs:
-    uses: Ava-91/Ava-91/.github/workflows/reusable-docs.yml@main
+    uses: Ava-91/Ava-91/.github/workflows/reusable-docs.yml@automation/reusable-workflow-inputs
     with:
       paths: "./README.md"
